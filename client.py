@@ -259,6 +259,69 @@ class SketchEngineClient:
         response.raise_for_status()
         return response.json()
 
+    def thes_search(
+        self,
+        corpname: str,
+        lemma: str,
+        lpos: Optional[str] = None,
+        usesubcorp: Optional[str] = None,
+        minthesscore: Optional[int] = None,
+        maxthesitems: Optional[int] = None,
+        clustertitems: Optional[int] = None,
+        minsim: Optional[int] = None,
+        format: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Generate a list of words similar in meaning or belonging to the same semantic group.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            lemma: The base form of the word to query synonyms for
+            lpos: Part of speech for the lemma
+            usesubcorp: Name of the subcorpus (defaults to entire corpus)
+            minthesscore: Minimum score for the thesaurus list
+            maxthesitems: Maximum number of items to display
+            clustertitems: Whether to cluster items by similarity in meaning (0 or 1)
+            minsim: Minimum similarity threshold used when clustertitems=1
+            format: Output format (defaults to JSON)
+            
+        Returns:
+            Dict containing the thesaurus results with similar words and their scores
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname or not lemma:
+            raise ValueError("corpname and lemma are required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname,
+            "lemma": lemma
+        }
+        
+        # Add optional parameters if provided
+        if lpos:
+            params["lpos"] = lpos
+        if usesubcorp:
+            params["usesubcorp"] = usesubcorp
+        if minthesscore is not None:
+            params["minthesscore"] = minthesscore
+        if maxthesitems is not None:
+            params["maxthesitems"] = maxthesitems
+        if clustertitems is not None:
+            if clustertitems not in (0, 1):
+                raise ValueError("clustertitems must be 0 or 1")
+            params["clustertitems"] = clustertitems
+        if minsim is not None:
+            params["minsim"] = minsim
+        if format:
+            params["format"] = format
+            
+        response = self.session.get(f"{self.BASE_URL}/search/thes", params=params)
+        response.raise_for_status()
+        return response.json()
+
 if __name__ == "__main__":
     # Example usage
     client = SketchEngineClient()
