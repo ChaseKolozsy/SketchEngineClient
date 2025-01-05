@@ -320,21 +320,24 @@ class SketchEngineClient:
         usesubcorp: Optional[str] = None,
         minthesscore: Optional[int] = None,
         maxthesitems: Optional[int] = None,
-        clustertitems: Optional[int] = None,
+        clusteritems: Optional[int] = None,
         minsim: Optional[int] = None,
         format: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Generate a list of words similar in meaning or belonging to the same semantic group.
+        """Thesaurus - a list of synonyms and similar words.
+        
+        Generates a list of words which are similar in meaning or belong to the same semantic group. 
+        The synonys are identified fully automatically by the use of statistics.
         
         Args:
             corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
-            lemma: The base form of the word to query synonyms for
+            lemma: The base form of the word to find synonyms for
             lpos: Part of speech for the lemma
             usesubcorp: Name of the subcorpus (defaults to entire corpus)
             minthesscore: Minimum score for the thesaurus list
             maxthesitems: Maximum number of items to display
-            clustertitems: Whether to cluster items by similarity in meaning (0 or 1)
-            minsim: Minimum similarity threshold used when clustertitems=1
+            clusteritems: Whether to cluster items by similarity in meaning (0 or 1)
+            minsim: Minimum similarity threshold used when clusteritems=1
             format: Output format (defaults to JSON)
             
         Returns:
@@ -362,10 +365,10 @@ class SketchEngineClient:
             params["minthesscore"] = minthesscore
         if maxthesitems is not None:
             params["maxthesitems"] = maxthesitems
-        if clustertitems is not None:
-            if clustertitems not in (0, 1):
-                raise ValueError("clustertitems must be 0 or 1")
-            params["clustertitems"] = clustertitems
+        if clusteritems is not None:
+            if clusteritems not in (0, 1):
+                raise ValueError("clusteritems must be 0 or 1")
+            params["clusteritems"] = clusteritems
         if minsim is not None:
             params["minsim"] = minsim
         if format:
