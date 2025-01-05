@@ -690,6 +690,134 @@ class SketchEngineClient:
         response.raise_for_status()
         return response.json()
 
+    def struct_wordlist_search(
+        self,
+        corpname: str,
+        wlattr: str,
+        wlstruct_attr1: Optional[str] = None,
+        wlstruct_attr2: Optional[str] = None,
+        wlstruct_attr3: Optional[str] = None,
+        wlnums: Optional[WordlistFreqType] = None,
+        wlmaxfreq: Optional[int] = None,
+        wlminfreq: Optional[int] = None,
+        wlmaxitems: Optional[int] = None,
+        wlpat: Optional[str] = None,
+        wlsort: Optional[WordlistSortMode] = None,
+        wlblacklist: Optional[Union[str, List[str]]] = None,
+        include_nonwords: Optional[int] = None,
+        relfreq: Optional[int] = None,
+        reldocf: Optional[int] = None,
+        wlicase: Optional[int] = None,
+        wlpage: Optional[int] = None,
+        format: Optional[str] = None,
+        random: Optional[int] = None,
+        wltype: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Provides a list of frequencies in the specified corpus with customizable display.
+        
+        The difference from the wordlist is that this endpoint allows to customize how the results 
+        are displayed.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            wlattr: Attribute to count (e.g. word, lc, lemma, lemma_lc, tag, pos)
+            wlstruct_attr1: First structural attribute for grouping results
+            wlstruct_attr2: Second structural attribute for grouping results
+            wlstruct_attr3: Third structural attribute for grouping results
+            wlnums: Type of frequency to show (raw freq, doc freq, or avg reduced freq)
+            wlmaxfreq: Maximum frequency limit (items above this are not shown)
+            wlminfreq: Minimum frequency limit (items below this are excluded)
+            wlmaxitems: Maximum number of items to return
+            wlpat: Regex pattern to filter items (e.g. .* to match all)
+            wlsort: Sorting of the results (by frequency or document frequency)
+            wlblacklist: List of items to exclude (string with newline separators or list)
+            include_nonwords: Whether to include tokens not starting with letters (0 or 1)
+            relfreq: Include relative frequency of each item (0 or 1)
+            reldocf: Calculate document frequency for each item (0 or 1)
+            wlicase: Case-sensitive search (0 or 1)
+            wlpage: Page number for paginated results
+            format: Output format (defaults to JSON)
+            random: Return random sample of size n
+            wltype: Type of wordlist (basic, advanced, etc.)
+            
+        Returns:
+            Dict containing the structured wordlist results with frequencies
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname or not wlattr:
+            raise ValueError("corpname and wlattr are required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname,
+            "wlattr": wlattr
+        }
+        
+        # Add structural attributes if provided
+        if wlstruct_attr1:
+            params["wlstruct_attr1"] = wlstruct_attr1
+        if wlstruct_attr2:
+            params["wlstruct_attr2"] = wlstruct_attr2
+        if wlstruct_attr3:
+            params["wlstruct_attr3"] = wlstruct_attr3
+            
+        # Add frequency-related parameters
+        if wlnums:
+            params["wlnums"] = wlnums.value
+        if wlmaxfreq is not None:
+            params["wlmaxfreq"] = wlmaxfreq
+        if wlminfreq is not None:
+            params["wlminfreq"] = wlminfreq
+        if wlmaxitems is not None:
+            params["wlmaxitems"] = wlmaxitems
+            
+        # Add filtering parameters
+        if wlpat:
+            params["wlpat"] = wlpat
+        if wlsort:
+            params["wlsort"] = wlsort.value
+        if wlblacklist:
+            # Convert list to newline-separated string if needed
+            if isinstance(wlblacklist, list):
+                params["wlblacklist"] = "%0A".join(wlblacklist)
+            else:
+                params["wlblacklist"] = wlblacklist
+                
+        # Add boolean parameters with validation
+        if include_nonwords is not None:
+            if include_nonwords not in (0, 1):
+                raise ValueError("include_nonwords must be 0 or 1")
+            params["include_nonwords"] = include_nonwords
+        if relfreq is not None:
+            if relfreq not in (0, 1):
+                raise ValueError("relfreq must be 0 or 1")
+            params["relfreq"] = relfreq
+        if reldocf is not None:
+            if reldocf not in (0, 1):
+                raise ValueError("reldocf must be 0 or 1")
+            params["reldocf"] = reldocf
+        if wlicase is not None:
+            if wlicase not in (0, 1):
+                raise ValueError("wlicase must be 0 or 1")
+            params["wlicase"] = wlicase
+            
+        # Add pagination and format parameters
+        if wlpage is not None:
+            params["wlpage"] = wlpage
+        if format:
+            params["format"] = format
+        if random is not None:
+            params["random"] = random
+        if wltype:
+            params["wltype"] = wltype
+            
+        response = self.session.get(f"{self.BASE_URL}/search/struct_wordlist", params=params)
+        response.raise_for_status()
+        return response.json()
+
 if __name__ == "__main__":
     # Example usage
     client = SketchEngineClient()
