@@ -29,6 +29,17 @@ class WSketchSortMode(Enum):
     SCORE = "s"
     FREQUENCY = "f"
 
+class WordlistFreqType(Enum):
+    """Available frequency types for wordlist."""
+    RAW_FREQ = "freq"
+    DOC_FREQ = "docf"
+    AVG_REDUCED_FREQ = "arf"
+
+class WordlistSortMode(Enum):
+    """Available sorting modes for wordlist."""
+    FREQUENCY = "freq"
+    DOC_FREQUENCY = "docf"
+
 class SketchEngineClient:
     """Client for interacting with the Sketch Engine API."""
     
@@ -423,6 +434,107 @@ class SketchEngineClient:
             params["format"] = format
             
         response = self.session.get(f"{self.BASE_URL}/search/wsketch", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def wordlist_search(
+        self,
+        corpname: str,
+        wlattr: str,
+        usesubcorp: Optional[str] = None,
+        wlnums: Optional[WordlistFreqType] = None,
+        wlmaxfreq: Optional[int] = None,
+        wlminfreq: Optional[int] = None,
+        wlpat: Optional[str] = None,
+        wlsort: Optional[WordlistSortMode] = None,
+        wlblacklist: Optional[Union[str, List[str]]] = None,
+        include_nonwords: Optional[int] = None,
+        relfreq: Optional[int] = None,
+        reldocf: Optional[int] = None,
+        wlfile: Optional[str] = None,
+        addfreqs: Optional[int] = None,
+        asyn: Optional[int] = None,
+        format: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Generate frequency lists of all tokens, lemmas, word forms, etc.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            wlattr: Attribute to count (e.g. word, lc, lemma, lemma_lc, tag, pos)
+            usesubcorp: Subcorpus name (defaults to entire corpus)
+            wlnums: Type of frequency to show (raw freq, doc freq, or avg reduced freq)
+            wlmaxfreq: Maximum frequency limit (items above this are not shown)
+            wlminfreq: Minimum frequency limit (items below this are excluded)
+            wlpat: Regex pattern to filter items (e.g. .* to match all)
+            wlsort: Sorting of the results (by frequency or document frequency)
+            wlblacklist: List of items to exclude (string with newline separators or list)
+            include_nonwords: Whether to include tokens not starting with letters (0 or 1)
+            relfreq: Include relative frequency of each item (0 or 1)
+            reldocf: Calculate document frequency for each item (0 or 1)
+            wlfile: A whitelist file with items to include
+            addfreqs: Additional frequency type (e.g. 1 when retrieving docf)
+            asyn: 1 => partial results returned as soon as first page is available
+            format: Output format (defaults to JSON)
+            
+        Returns:
+            Dict containing the wordlist results
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname or not wlattr:
+            raise ValueError("corpname and wlattr are required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname,
+            "wlattr": wlattr
+        }
+        
+        # Add optional parameters if provided
+        if usesubcorp:
+            params["usesubcorp"] = usesubcorp
+        if wlnums:
+            params["wlnums"] = wlnums.value
+        if wlmaxfreq is not None:
+            params["wlmaxfreq"] = wlmaxfreq
+        if wlminfreq is not None:
+            params["wlminfreq"] = wlminfreq
+        if wlpat:
+            params["wlpat"] = wlpat
+        if wlsort:
+            params["wlsort"] = wlsort.value
+        if wlblacklist:
+            # Convert list to newline-separated string if needed
+            if isinstance(wlblacklist, list):
+                params["wlblacklist"] = "%0A".join(wlblacklist)
+            else:
+                params["wlblacklist"] = wlblacklist
+        if include_nonwords is not None:
+            if include_nonwords not in (0, 1):
+                raise ValueError("include_nonwords must be 0 or 1")
+            params["include_nonwords"] = include_nonwords
+        if relfreq is not None:
+            if relfreq not in (0, 1):
+                raise ValueError("relfreq must be 0 or 1")
+            params["relfreq"] = relfreq
+        if reldocf is not None:
+            if reldocf not in (0, 1):
+                raise ValueError("reldocf must be 0 or 1")
+            params["reldocf"] = reldocf
+        if wlfile:
+            params["wlfile"] = wlfile
+        if addfreqs is not None:
+            params["addfreqs"] = addfreqs
+        if asyn is not None:
+            if asyn not in (0, 1):
+                raise ValueError("asyn must be 0 or 1")
+            params["asyn"] = asyn
+        if format:
+            params["format"] = format
+            
+        response = self.session.get(f"{self.BASE_URL}/search/wordlist", params=params)
         response.raise_for_status()
         return response.json()
 
