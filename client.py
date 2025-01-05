@@ -18,6 +18,12 @@ class ViewMode(Enum):
     SENTENCE = "sen"
     KWIC = "kwic"
 
+class DiffBy(Enum):
+    """Available comparison modes for word sketch differences."""
+    LEMMA = "lemma"
+    WORD_FORM = "word form"
+    SUBCORPUS = "subcorpus"
+
 class SketchEngineClient:
     """Client for interacting with the Sketch Engine API."""
     
@@ -160,6 +166,96 @@ class SketchEngineClient:
             params["format"] = format
             
         response = self.session.get(f"{self.BASE_URL}/search/concordance", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def wsdiff_search(
+        self,
+        corpname: str,
+        lemma: str,
+        diff_by: Optional[DiffBy] = None,
+        lpos: Optional[str] = None,
+        lemma2: Optional[str] = None,
+        minfreq: Optional[Union[str, int]] = None,
+        maxcommon: Optional[int] = None,
+        separate_blocks: Optional[int] = None,
+        maxexclusive: Optional[int] = None,
+        wordform1: Optional[str] = None,
+        wordform2: Optional[str] = None,
+        subcorp1: Optional[str] = None,
+        subcorp2: Optional[str] = None,
+        format: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Perform a word sketch difference search comparing two lemmas, word forms, or subcorpora.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            lemma: The base form of the first lemma to compare
+            diff_by: The mode of comparison (lemma, word form, or subcorpus)
+            lpos: The part of speech of the lemma
+            lemma2: The second lemma to compare (required if diff_by=lemma)
+            minfreq: Minimum frequency of a collocate (integer or 'auto')
+            maxcommon: Maximum number of collocates in a single table (default 12)
+            separate_blocks: 1 => produce separate blocks by grammatical relation; 0 => single list
+            maxexclusive: Maximum number of collocates for an individual lemma (requires separate_blocks=1)
+            wordform1: The first word form to compare (required if diff_by=word form)
+            wordform2: The second word form to compare (required if diff_by=word form)
+            subcorp1: The first subcorpus name (required if diff_by=subcorpus)
+            subcorp2: The second subcorpus name (required if diff_by=subcorpus)
+            format: Output format (default JSON)
+            
+        Returns:
+            Dict containing the word sketch difference results
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname or not lemma:
+            raise ValueError("corpname and lemma are required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname,
+            "lemma": lemma
+        }
+        
+        # Handle diff_by specific requirements
+        if diff_by:
+            params["diff_by"] = diff_by.value
+            
+            if diff_by == DiffBy.LEMMA and not lemma2:
+                raise ValueError("lemma2 is required when diff_by=lemma")
+            elif diff_by == DiffBy.WORD_FORM and (not wordform1 or not wordform2):
+                raise ValueError("wordform1 and wordform2 are required when diff_by=word form")
+            elif diff_by == DiffBy.SUBCORPUS and (not subcorp1 or not subcorp2):
+                raise ValueError("subcorp1 and subcorp2 are required when diff_by=subcorpus")
+        
+        # Add optional parameters if provided
+        if lpos:
+            params["lpos"] = lpos
+        if lemma2:
+            params["lemma2"] = lemma2
+        if minfreq is not None:
+            params["minfreq"] = str(minfreq)
+        if maxcommon is not None:
+            params["maxcommon"] = maxcommon
+        if separate_blocks is not None:
+            params["separate_blocks"] = separate_blocks
+        if maxexclusive is not None:
+            params["maxexclusive"] = maxexclusive
+        if wordform1:
+            params["wordform1"] = wordform1
+        if wordform2:
+            params["wordform2"] = wordform2
+        if subcorp1:
+            params["subcorp1"] = subcorp1
+        if subcorp2:
+            params["subcorp2"] = subcorp2
+        if format:
+            params["format"] = format
+            
+        response = self.session.get(f"{self.BASE_URL}/search/wsdiff", params=params)
         response.raise_for_status()
         return response.json()
 
