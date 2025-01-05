@@ -221,9 +221,9 @@ class SketchEngineClient:
         self,
         corpname: str,
         lemma: str,
-        diff_by: Optional[DiffBy] = None,
         lpos: Optional[str] = None,
-        lemma2: Optional[str] = None,
+        diff_by: Optional[DiffBy] = None,
+        lemma_2: Optional[str] = None,
         minfreq: Optional[Union[str, int]] = None,
         maxcommon: Optional[int] = None,
         separate_blocks: Optional[int] = None,
@@ -234,14 +234,17 @@ class SketchEngineClient:
         subcorp2: Optional[str] = None,
         format: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Perform a word sketch difference search comparing two lemmas, word forms, or subcorpora.
+        """Word sketch difference to compare the behaviour of two words.
+        
+        Returns collocations of two lemmas with scores indicating which collocation is more typical 
+        of which lemma. It is used to observe the differences between the lemmas.
         
         Args:
             corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
             lemma: The base form of the first lemma to compare
-            diff_by: The mode of comparison (lemma, word form, or subcorpus)
             lpos: The part of speech of the lemma
-            lemma2: The second lemma to compare (required if diff_by=lemma)
+            diff_by: The mode of comparison (lemma, word form, or subcorpus)
+            lemma_2: The second lemma to compare (required if diff_by=lemma)
             minfreq: Minimum frequency of a collocate (integer or 'auto')
             maxcommon: Maximum number of collocates in a single table (default 12)
             separate_blocks: 1 => produce separate blocks by grammatical relation; 0 => single list
@@ -253,7 +256,7 @@ class SketchEngineClient:
             format: Output format (default JSON)
             
         Returns:
-            Dict containing the word sketch difference results
+            Dict containing the word sketch difference results with collocation scores
             
         Raises:
             requests.RequestException: If the API request fails
@@ -272,8 +275,8 @@ class SketchEngineClient:
         if diff_by:
             params["diff_by"] = diff_by.value
             
-            if diff_by == DiffBy.LEMMA and not lemma2:
-                raise ValueError("lemma2 is required when diff_by=lemma")
+            if diff_by == DiffBy.LEMMA and not lemma_2:
+                raise ValueError("lemma_2 is required when diff_by=lemma")
             elif diff_by == DiffBy.WORD_FORM and (not wordform1 or not wordform2):
                 raise ValueError("wordform1 and wordform2 are required when diff_by=word form")
             elif diff_by == DiffBy.SUBCORPUS and (not subcorp1 or not subcorp2):
@@ -282,13 +285,15 @@ class SketchEngineClient:
         # Add optional parameters if provided
         if lpos:
             params["lpos"] = lpos
-        if lemma2:
-            params["lemma2"] = lemma2
+        if lemma_2:
+            params["lemma_2"] = lemma_2
         if minfreq is not None:
             params["minfreq"] = str(minfreq)
         if maxcommon is not None:
             params["maxcommon"] = maxcommon
         if separate_blocks is not None:
+            if separate_blocks not in (0, 1):
+                raise ValueError("separate_blocks must be 0 or 1")
             params["separate_blocks"] = separate_blocks
         if maxexclusive is not None:
             params["maxexclusive"] = maxexclusive
