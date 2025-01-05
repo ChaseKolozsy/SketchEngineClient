@@ -104,13 +104,20 @@ class SketchEngineClient:
         kwicleftctx: Optional[str] = "100#",
         kwicrightctx: Optional[str] = "100#",
         asyn: Optional[int] = None,
-        format: Optional[str] = None
+        format: Optional[str] = None,
+        cup_err_code: Optional[str] = None,
+        cup_err: Optional[str] = None,
+        cup_corr: Optional[str] = None,
+        errcorr_switch: Optional[str] = None,
+        json: Optional[int] = None
     ) -> Dict[str, Any]:
         """Perform a concordance search in the specified corpus.
         
-        For basic searches, only corpname and q parameters are required.
-        The concordance allows complex criteria for searching the corpus.
-        The queries can combine any data, metadata and annotations found in the corpus.
+        Shows the search word or phrase in context. The concordance allows complex criteria 
+        for searching the corpus. The queries can combine any data, metadata and annotations 
+        found in the corpus.
+        
+        For basic concordance searches, it's enough to use just corpname and q parameters.
         
         Args:
             corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
@@ -132,6 +139,11 @@ class SketchEngineClient:
             kwicrightctx: Size of right context in KWIC view
             asyn: Whether to use asynchronous processing
             format: Output format (default JSON)
+            cup_err_code: Error code for error-annotated corpora
+            cup_err: Error type for error-annotated corpora
+            cup_corr: Correction type for error-annotated corpora
+            errcorr_switch: Switch for error correction display
+            json: Whether to return JSON format (0 or 1)
             
         Returns:
             Dict containing the concordance search results
@@ -148,18 +160,18 @@ class SketchEngineClient:
             "corpname": corpname
         }
         
-        # Handle pagination parameters
-        if fromp is not None:
-            params["fromp"] = fromp
-        if pagesize is not None:
-            params["pagesize"] = pagesize
-        
         # Handle query parameters - prefer direct q parameter if provided
         if q:
             params["q"] = q
         elif query_type and query:
             params["concordance_query[queryselector]"] = query_type.value
             params[f"concordance_query[{query_type.value.replace('row', '')}]"] = query
+        
+        # Handle pagination parameters
+        if fromp is not None:
+            params["fromp"] = fromp
+        if pagesize is not None:
+            params["pagesize"] = pagesize
         
         # Add optional parameters if provided
         if usesubcorp:
@@ -188,6 +200,18 @@ class SketchEngineClient:
             params["asyn"] = asyn
         if format:
             params["format"] = format
+            
+        # Error correction parameters
+        if cup_err_code:
+            params["cup_err_code"] = cup_err_code
+        if cup_err:
+            params["cup_err"] = cup_err
+        if cup_corr:
+            params["cup_corr"] = cup_corr
+        if errcorr_switch:
+            params["errcorr_switch"] = errcorr_switch
+        if json is not None:
+            params["json"] = json
             
         response = self.session.get(f"{self.BASE_URL}/search/concordance", params=params)
         response.raise_for_status()
