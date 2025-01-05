@@ -92,6 +92,7 @@ def build_function_code(func_name: str, method: str, path: str, parameters: list
 
     path_params = []
     query_params = []
+    body_params = []
     doc_lines = [f'"""{method.upper()} {path}', "Parameters:"]
 
     # We'll keep a list of all param names to detect duplicates
@@ -112,22 +113,25 @@ def build_function_code(func_name: str, method: str, path: str, parameters: list
         used_names[candidate] = True
         return candidate
 
-    # We store (py_name, openapi_name, location, description).
+    # We store (py_name, openapi_name, location, description)
     path_param_list = []
     query_param_list = []
+    body_param_list = []
 
     for p in resolved_params:
         p_in = p.get('in', 'query')
         p_name = p.get('name', 'param')
-        desc  = p.get('description', '')
+        desc = p.get('description', '')
 
-        py_name = get_unique_name(p_name)  # sanitize for Python
+        py_name = get_unique_name(p_name)
         doc_lines.append(f"  :param {py_name}: ({p_in}) {desc}".rstrip())
 
         if p_in == 'path':
             path_param_list.append((py_name, p_name))
         elif p_in == 'query':
             query_param_list.append((py_name, p_name))
+        elif p_in == 'body':
+            body_param_list.append((py_name, p_name))
 
     doc_lines.append('"""')
     docstring = "\n".join(doc_lines)
@@ -160,24 +164,41 @@ def build_function_code(func_name: str, method: str, path: str, parameters: list
 
     # Build dict of query params
     if query_param_list:
-        # 'openapi_name': python_var
-        # but we need to map python_var to the user’s variable name
-        # e.g. 'corpname': corpname
-        items = []
-        for (py_name, openapi_name) in query_param_list:
-            items.append(f"'{openapi_name}': {py_name}")
-        indent_str = "    "
-        params_code = "params = {\n" + indent_str + (",\n"+indent_str).join(items) + "\n}"
+        params_items = [f"'{openapi_name}': {py_name}" for py_name, openapi_name in query_param_list]
+        params_dict = ", ".join(params_items)
+        params_code = [
+            "    params = {",
+            f"        {params_dict}",
+            "    }",
+            "    # Filter out None values",
+            "    params = {k: v for k, v in params.items() if v is not None}"
+        ]
+        params_code = "\n".join(params_code)
     else:
-        params_code = "params = None"
+        params_code = "    params = None"
 
-    method_lower = method.lower()
+    # Build request body for POST/PUT methods
+    if method.lower() in ['post', 'put'] and body_param_list:
+        body_items = [f"'{openapi_name}': {py_name}" for py_name, openapi_name in body_param_list]
+        body_dict = ", ".join(body_items)
+        data_code = [
+            "    data = {",
+            f"        {body_dict}",
+            "    }",
+            "    # Filter out None values",
+            "    data = {k: v for k, v in data.items() if v is not None}"
+        ]
+        data_code = "\n".join(data_code)
+    else:
+        data_code = "    data = None"
+
     lines = [
-        f"def {func_name}({signature}):",
+        f"def {func_name}({signature}):",  # No indentation for method definition
         f"    {docstring}",
-        f"    endpoint = f\"{f_str_path}\"",  # Now we just need the path part
-        f"    {params_code}",
-        f"    return self.make_request('{method.lower()}', endpoint, params=params)",
+        f"    endpoint = f\"{f_str_path}\"",
+        f"{params_code}",
+        f"{data_code}",
+        f"    return self.make_request('{method.lower()}', endpoint, params=params, data=data)",
         "\n"
     ]
     return "\n".join(lines)

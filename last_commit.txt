@@ -1,0 +1,1085 @@
+commit 387e03f79eb8dc0b1d988c9db609fc449e7b3a85
+Author: Chase Kolozsy <chasekolozsy@gmail.com>
+Date:   Sat Jan 4 21:08:21 2025 -0700
+
+    misc
+
+diff --git a/client.py b/client.py
+index 0945075..f44d75c 100644
+--- a/client.py
++++ b/client.py
+@@ -56,16 +56,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/corp_info"
+         params = {
+-        'corpname': corpname,
+-        'usesubcorp': usesubcorp,
+-        'subcorpora': subcorpora,
+-        'gramrels': gramrels,
+-        'corpcheck': corpcheck,
+-        'registry': registry,
+-        'struct_attr_stats': struct_attr_stats,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'usesubcorp': usesubcorp, 'subcorpora': subcorpora, 'gramrels': gramrels, 'corpcheck': corpcheck, 'registry': registry, 'struct_attr_stats': struct_attr_stats, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_wordlist(self, corpname=None, wlattr=None, usesubcorp=None, wlnums=None, wlmaxfreq=None, wlminfreq=None, wlpat=None, wlsort=None, wlblacklist=None, include_nonwords=None, relfreq=None, reldocf=None, wlfile=None, wlicase=None, wlmaxitems=None, wlpage=None, format=None, random=None, wltype=None, ngrams_n=None, ngrams_max_n=None, nest_ngrams=None, simple_n=None, usengrams=None):
+@@ -110,32 +106,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/wordlist"
+         params = {
+-        'corpname': corpname,
+-        'wlattr': wlattr,
+-        'usesubcorp': usesubcorp,
+-        'wlnums': wlnums,
+-        'wlmaxfreq': wlmaxfreq,
+-        'wlminfreq': wlminfreq,
+-        'wlpat': wlpat,
+-        'wlsort': wlsort,
+-        'wlblacklist': wlblacklist,
+-        'include_nonwords': include_nonwords,
+-        'relfreq': relfreq,
+-        'reldocf': reldocf,
+-        'wlfile': wlfile,
+-        'wlicase': wlicase,
+-        'wlmaxitems': wlmaxitems,
+-        'wlpage': wlpage,
+-        'format': format,
+-        'random': random,
+-        'wltype': wltype,
+-        'ngrams_n': ngrams_n,
+-        'ngrams_max_n': ngrams_max_n,
+-        'nest_ngrams': nest_ngrams,
+-        'simple_n': simple_n,
+-        'usengrams': usengrams
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'wlattr': wlattr, 'usesubcorp': usesubcorp, 'wlnums': wlnums, 'wlmaxfreq': wlmaxfreq, 'wlminfreq': wlminfreq, 'wlpat': wlpat, 'wlsort': wlsort, 'wlblacklist': wlblacklist, 'include_nonwords': include_nonwords, 'relfreq': relfreq, 'reldocf': reldocf, 'wlfile': wlfile, 'wlicase': wlicase, 'wlmaxitems': wlmaxitems, 'wlpage': wlpage, 'format': format, 'random': random, 'wltype': wltype, 'ngrams_n': ngrams_n, 'ngrams_max_n': ngrams_max_n, 'nest_ngrams': nest_ngrams, 'simple_n': simple_n, 'usengrams': usengrams
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_struct_wordlist(self, corpname=None, wlattr=None, wlstruct_attr1=None, wlstruct_attr2=None, wlstruct_attr3=None, wlnums=None, wlmaxfreq=None, wlminfreq=None, wlmaxitems=None, wlpat=None, wlsort=None, wlblacklist=None, include_nonwords=None, relfreq=None, reldocf=None, wlicase=None, wlpage=None, format=None, random=None, wltype=None):
+@@ -176,28 +152,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/struct_wordlist"
+         params = {
+-        'corpname': corpname,
+-        'wlattr': wlattr,
+-        'wlstruct_attr1': wlstruct_attr1,
+-        'wlstruct_attr2': wlstruct_attr2,
+-        'wlstruct_attr3': wlstruct_attr3,
+-        'wlnums': wlnums,
+-        'wlmaxfreq': wlmaxfreq,
+-        'wlminfreq': wlminfreq,
+-        'wlmaxitems': wlmaxitems,
+-        'wlpat': wlpat,
+-        'wlsort': wlsort,
+-        'wlblacklist': wlblacklist,
+-        'include_nonwords': include_nonwords,
+-        'relfreq': relfreq,
+-        'reldocf': reldocf,
+-        'wlicase': wlicase,
+-        'wlpage': wlpage,
+-        'format': format,
+-        'random': random,
+-        'wltype': wltype
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'wlattr': wlattr, 'wlstruct_attr1': wlstruct_attr1, 'wlstruct_attr2': wlstruct_attr2, 'wlstruct_attr3': wlstruct_attr3, 'wlnums': wlnums, 'wlmaxfreq': wlmaxfreq, 'wlminfreq': wlminfreq, 'wlmaxitems': wlmaxitems, 'wlpat': wlpat, 'wlsort': wlsort, 'wlblacklist': wlblacklist, 'include_nonwords': include_nonwords, 'relfreq': relfreq, 'reldocf': reldocf, 'wlicase': wlicase, 'wlpage': wlpage, 'format': format, 'random': random, 'wltype': wltype
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_wsketch(self, corpname=None, lemma=None, lpos=None, usesubcorp=None, minfreq=None, minscore=None, minsim=None, maxitems=None, clustercolls=None, expand_seppage=None, sort_ws_columns=None, structured=None, bim_corpname=None, bim_lemma=None, bim_lpos=None, format=None):
+@@ -222,24 +182,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/wsketch"
+         params = {
+-        'corpname': corpname,
+-        'lemma': lemma,
+-        'lpos': lpos,
+-        'usesubcorp': usesubcorp,
+-        'minfreq': minfreq,
+-        'minscore': minscore,
+-        'minsim': minsim,
+-        'maxitems': maxitems,
+-        'clustercolls': clustercolls,
+-        'expand_seppage': expand_seppage,
+-        'sort_ws_columns': sort_ws_columns,
+-        'structured': structured,
+-        'bim_corpname': bim_corpname,
+-        'bim_lemma': bim_lemma,
+-        'bim_lpos': bim_lpos,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'lemma': lemma, 'lpos': lpos, 'usesubcorp': usesubcorp, 'minfreq': minfreq, 'minscore': minscore, 'minsim': minsim, 'maxitems': maxitems, 'clustercolls': clustercolls, 'expand_seppage': expand_seppage, 'sort_ws_columns': sort_ws_columns, 'structured': structured, 'bim_corpname': bim_corpname, 'bim_lemma': bim_lemma, 'bim_lpos': bim_lpos, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_thes(self, corpname=None, lemma=None, lpos=None, usesubcorp=None, minthesscore=None, maxthesitems=None, clusteritems=None, minsim=None, format=None):
+@@ -257,17 +205,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/thes"
+         params = {
+-        'corpname': corpname,
+-        'lemma': lemma,
+-        'lpos': lpos,
+-        'usesubcorp': usesubcorp,
+-        'minthesscore': minthesscore,
+-        'maxthesitems': maxthesitems,
+-        'clusteritems': clusteritems,
+-        'minsim': minsim,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'lemma': lemma, 'lpos': lpos, 'usesubcorp': usesubcorp, 'minthesscore': minthesscore, 'maxthesitems': maxthesitems, 'clusteritems': clusteritems, 'minsim': minsim, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_wsdiff(self, corpname=None, lemma=None, lpos=None, diff_by=None, lemma2=None, minfreq=None, maxcommon=None, separate_blocks=None, maxexclusive=None, wordform1=None, wordform2=None, subcorp1=None, subcorp2=None, format=None):
+@@ -296,22 +239,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/wsdiff"
+         params = {
+-        'corpname': corpname,
+-        'lemma': lemma,
+-        'lpos': lpos,
+-        'diff_by': diff_by,
+-        'lemma2': lemma2,
+-        'minfreq': minfreq,
+-        'maxcommon': maxcommon,
+-        'separate_blocks': separate_blocks,
+-        'maxexclusive': maxexclusive,
+-        'wordform1': wordform1,
+-        'wordform2': wordform2,
+-        'subcorp1': subcorp1,
+-        'subcorp2': subcorp2,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'lemma': lemma, 'lpos': lpos, 'diff_by': diff_by, 'lemma2': lemma2, 'minfreq': minfreq, 'maxcommon': maxcommon, 'separate_blocks': separate_blocks, 'maxexclusive': maxexclusive, 'wordform1': wordform1, 'wordform2': wordform2, 'subcorp1': subcorp1, 'subcorp2': subcorp2, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_concordance(self, corpname=None, q=None, concordance_query_queryselector=None, concordance_query_iquery=None, concordance_query_cql=None, concordance_query_lemma=None, concordance_query_char=None, concordance_query_word=None, concordance_query_phrase=None, usesubcorp=None, lpos=None, default_attr=None, attrs=None, refs=None, attr_allpos=None, viewmode=None, cup_hl=None, structs=None, fromp=None, pagesize=None, kwicleftctx=None, kwicrightctx=None, errcorr_switch=None, cup_err_code=None, cup_err=None, cup_corr=None, json=None, asyn=None, format=None):
+@@ -399,37 +332,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/concordance"
+         params = {
+-        'corpname': corpname,
+-        'q': q,
+-        'concordance_query[queryselector]': concordance_query_queryselector,
+-        'concordance_query[iquery]': concordance_query_iquery,
+-        'concordance_query[cql]': concordance_query_cql,
+-        'concordance_query[lemma]': concordance_query_lemma,
+-        'concordance_query[char]': concordance_query_char,
+-        'concordance_query[word]': concordance_query_word,
+-        'concordance_query[phrase]': concordance_query_phrase,
+-        'usesubcorp': usesubcorp,
+-        'lpos': lpos,
+-        'default_attr': default_attr,
+-        'attrs': attrs,
+-        'refs': refs,
+-        'attr_allpos': attr_allpos,
+-        'viewmode': viewmode,
+-        'cup_hl': cup_hl,
+-        'structs': structs,
+-        'fromp': fromp,
+-        'pagesize': pagesize,
+-        'kwicleftctx': kwicleftctx,
+-        'kwicrightctx': kwicrightctx,
+-        'errcorr_switch': errcorr_switch,
+-        'cup_err_code': cup_err_code,
+-        'cup_err': cup_err,
+-        'cup_corr': cup_corr,
+-        'json': json,
+-        'asyn': asyn,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'q': q, 'concordance_query[queryselector]': concordance_query_queryselector, 'concordance_query[iquery]': concordance_query_iquery, 'concordance_query[cql]': concordance_query_cql, 'concordance_query[lemma]': concordance_query_lemma, 'concordance_query[char]': concordance_query_char, 'concordance_query[word]': concordance_query_word, 'concordance_query[phrase]': concordance_query_phrase, 'usesubcorp': usesubcorp, 'lpos': lpos, 'default_attr': default_attr, 'attrs': attrs, 'refs': refs, 'attr_allpos': attr_allpos, 'viewmode': viewmode, 'cup_hl': cup_hl, 'structs': structs, 'fromp': fromp, 'pagesize': pagesize, 'kwicleftctx': kwicleftctx, 'kwicrightctx': kwicrightctx, 'errcorr_switch': errcorr_switch, 'cup_err_code': cup_err_code, 'cup_err': cup_err, 'cup_corr': cup_corr, 'json': json, 'asyn': asyn, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_fullref(self, corpname=None, pos=None):
+@@ -440,10 +348,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/fullref"
+         params = {
+-        'corpname': corpname,
+-        'pos': pos
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'pos': pos
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_widectx(self, corpname=None, pos=None, hitlen=None, structs=None, detail_left_ctx=None, detail_right_ctx=None):
+@@ -458,14 +368,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/widectx"
+         params = {
+-        'corpname': corpname,
+-        'pos': pos,
+-        'hitlen': hitlen,
+-        'structs': structs,
+-        'detail_left_ctx': detail_left_ctx,
+-        'detail_right_ctx': detail_right_ctx
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'pos': pos, 'hitlen': hitlen, 'structs': structs, 'detail_left_ctx': detail_left_ctx, 'detail_right_ctx': detail_right_ctx
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_freqml(self, corpname=None, ml1attr=None, ml1ctx=None, ml2attr=None, ml2ctx=None, ml3attr=None, ml3ctx=None, ml4attr=None, ml4ctx=None, ml5attr=None, ml5ctx=None, ml6attr=None, ml6ctx=None, q=None, usesubcorp=None, fmaxitems=None, fpage=None, group=None, showpoc=None, showreltt=None, showrel=None, freqlevel=None, json=None, freq_sort=None, format=None):
+@@ -582,33 +490,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/freqml"
+         params = {
+-        'corpname': corpname,
+-        'ml1attr': ml1attr,
+-        'ml1ctx': ml1ctx,
+-        'ml2attr': ml2attr,
+-        'ml2ctx': ml2ctx,
+-        'ml3attr': ml3attr,
+-        'ml3ctx': ml3ctx,
+-        'ml4attr': ml4attr,
+-        'ml4ctx': ml4ctx,
+-        'ml5attr': ml5attr,
+-        'ml5ctx': ml5ctx,
+-        'ml6attr': ml6attr,
+-        'ml6ctx': ml6ctx,
+-        'q': q,
+-        'usesubcorp': usesubcorp,
+-        'fmaxitems': fmaxitems,
+-        'fpage': fpage,
+-        'group': group,
+-        'showpoc': showpoc,
+-        'showreltt': showreltt,
+-        'showrel': showrel,
+-        'freqlevel': freqlevel,
+-        'json': json,
+-        'freq_sort': freq_sort,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'ml1attr': ml1attr, 'ml1ctx': ml1ctx, 'ml2attr': ml2attr, 'ml2ctx': ml2ctx, 'ml3attr': ml3attr, 'ml3ctx': ml3ctx, 'ml4attr': ml4attr, 'ml4ctx': ml4ctx, 'ml5attr': ml5attr, 'ml5ctx': ml5ctx, 'ml6attr': ml6attr, 'ml6ctx': ml6ctx, 'q': q, 'usesubcorp': usesubcorp, 'fmaxitems': fmaxitems, 'fpage': fpage, 'group': group, 'showpoc': showpoc, 'showreltt': showreltt, 'showrel': showrel, 'freqlevel': freqlevel, 'json': json, 'freq_sort': freq_sort, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_freq_distrib(self, corpname=None, res=None, lpos=None, default_attr=None, attrs=None, structs=None, refs=None, attr_allpos=None, viewmode=None, fc_lemword_window_type=None, fc_lemword_wsize=None, fc_lemword_type=None, fc_pos_window_type=None, fc_pos_wsize=None, fc_pos_type=None, json=None, normalize=None, format=None):
+@@ -671,26 +558,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/freq_distrib"
+         params = {
+-        'corpname': corpname,
+-        'res': res,
+-        'lpos': lpos,
+-        'default_attr': default_attr,
+-        'attrs': attrs,
+-        'structs': structs,
+-        'refs': refs,
+-        'attr_allpos': attr_allpos,
+-        'viewmode': viewmode,
+-        'fc_lemword_window_type': fc_lemword_window_type,
+-        'fc_lemword_wsize': fc_lemword_wsize,
+-        'fc_lemword_type': fc_lemword_type,
+-        'fc_pos_window_type': fc_pos_window_type,
+-        'fc_pos_wsize': fc_pos_wsize,
+-        'fc_pos_type': fc_pos_type,
+-        'json': json,
+-        'normalize': normalize,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'res': res, 'lpos': lpos, 'default_attr': default_attr, 'attrs': attrs, 'structs': structs, 'refs': refs, 'attr_allpos': attr_allpos, 'viewmode': viewmode, 'fc_lemword_window_type': fc_lemword_window_type, 'fc_lemword_wsize': fc_lemword_wsize, 'fc_lemword_type': fc_lemword_type, 'fc_pos_window_type': fc_pos_window_type, 'fc_pos_wsize': fc_pos_wsize, 'fc_pos_type': fc_pos_type, 'json': json, 'normalize': normalize, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_freqdist(self, corpname=None, wlattr=None, diaattr=None, sse=None, threshold=None, ctx=None, wordlist=None, json=None):
+@@ -773,16 +646,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/freqdist"
+         params = {
+-        'corpname': corpname,
+-        'wlattr': wlattr,
+-        'diaattr': diaattr,
+-        'sse': sse,
+-        'threshold': threshold,
+-        'ctx': ctx,
+-        'wordlist': wordlist,
+-        'json': json
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'wlattr': wlattr, 'diaattr': diaattr, 'sse': sse, 'threshold': threshold, 'ctx': ctx, 'wordlist': wordlist, 'json': json
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_collx(self, corpname=None, q=None, usesubcorp=None, cattr=None, csortfn=None, cbgrfns=None, cfromw=None, ctow=None, cminfreq=None, cminbgr=None, cmaxitems=None, json=None):
+@@ -845,20 +714,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/collx"
+         params = {
+-        'corpname': corpname,
+-        'q': q,
+-        'usesubcorp': usesubcorp,
+-        'cattr': cattr,
+-        'csortfn': csortfn,
+-        'cbgrfns': cbgrfns,
+-        'cfromw': cfromw,
+-        'ctow': ctow,
+-        'cminfreq': cminfreq,
+-        'cminbgr': cminbgr,
+-        'cmaxitems': cmaxitems,
+-        'json': json
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'q': q, 'usesubcorp': usesubcorp, 'cattr': cattr, 'csortfn': csortfn, 'cbgrfns': cbgrfns, 'cfromw': cfromw, 'ctow': ctow, 'cminfreq': cminfreq, 'cminbgr': cminbgr, 'cmaxitems': cmaxitems, 'json': json
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_subcorp(self, corpname=None, subcname=None, create=None, delete=None, q=None, struct=None, json=None, format=None):
+@@ -955,16 +816,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/subcorp"
+         params = {
+-        'corpname': corpname,
+-        'subcname': subcname,
+-        'create': create,
+-        'delete': delete,
+-        'q': q,
+-        'struct': struct,
+-        'json': json,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'subcname': subcname, 'create': create, 'delete': delete, 'q': q, 'struct': struct, 'json': json, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_subcorpus_rename(self, corpname=None, subcorp_id=None, new_subcorp_name=None):
+@@ -976,11 +833,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/subcorpus_rename"
+         params = {
+-        'corpname': corpname,
+-        'subcorp_id': subcorp_id,
+-        'new_subcorp_name': new_subcorp_name
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'subcorp_id': subcorp_id, 'new_subcorp_name': new_subcorp_name
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_subcorp_info(self, corpname=None, subcname=None):
+@@ -991,10 +849,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/subcorp_info"
+         params = {
+-        'corpname': corpname,
+-        'subcname': subcname
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'subcname': subcname
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_extract_keywords(self, corpname=None, ref_corpname=None, usesubcorp=None, simple_n=None, wlfile=None, wlblacklist=None, attr=None, alnum=None, onealpha=None, minfreq=None, maxfreq=None, max_keywords=None, include_nonwords=None, icase=None, wlpat=None, addfreqs=None, reldocf=None, usengrams=None, ngrams_n=None, ngrams_max_n=None, format=None):
+@@ -1032,29 +892,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/extract_keywords"
+         params = {
+-        'corpname': corpname,
+-        'ref_corpname': ref_corpname,
+-        'usesubcorp': usesubcorp,
+-        'simple_n': simple_n,
+-        'wlfile': wlfile,
+-        'wlblacklist': wlblacklist,
+-        'attr': attr,
+-        'alnum': alnum,
+-        'onealpha': onealpha,
+-        'minfreq': minfreq,
+-        'maxfreq': maxfreq,
+-        'max_keywords': max_keywords,
+-        'include_nonwords': include_nonwords,
+-        'icase': icase,
+-        'wlpat': wlpat,
+-        'addfreqs': addfreqs,
+-        'reldocf': reldocf,
+-        'usengrams': usengrams,
+-        'ngrams_n': ngrams_n,
+-        'ngrams_max_n': ngrams_max_n,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'ref_corpname': ref_corpname, 'usesubcorp': usesubcorp, 'simple_n': simple_n, 'wlfile': wlfile, 'wlblacklist': wlblacklist, 'attr': attr, 'alnum': alnum, 'onealpha': onealpha, 'minfreq': minfreq, 'maxfreq': maxfreq, 'max_keywords': max_keywords, 'include_nonwords': include_nonwords, 'icase': icase, 'wlpat': wlpat, 'addfreqs': addfreqs, 'reldocf': reldocf, 'usengrams': usengrams, 'ngrams_n': ngrams_n, 'ngrams_max_n': ngrams_max_n, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_textypes_with_norms(self, corpname=None):
+@@ -1064,9 +907,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/textypes_with_norms"
+         params = {
+-        'corpname': corpname
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_search_attr_vals(self, corpname=None, avattr=None, avpat=None, avfrom=None, avmaxitems=None, icase=None, format=None):
+@@ -1082,15 +928,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/search/attr_vals"
+         params = {
+-        'corpname': corpname,
+-        'avattr': avattr,
+-        'avpat': avpat,
+-        'avfrom': avfrom,
+-        'avmaxitems': avmaxitems,
+-        'icase': icase,
+-        'format': format
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'corpname': corpname, 'avattr': avattr, 'avpat': avpat, 'avfrom': avfrom, 'avmaxitems': avmaxitems, 'icase': icase, 'format': format
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora(self):
+@@ -1099,7 +942,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora(self):
+@@ -1108,7 +952,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid(self, corpusId):
+@@ -1118,7 +963,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def put_ca_api_corpora_corpusid(self, corpusId):
+@@ -1128,7 +974,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}"
+         params = None
+-        return self.make_request('put', endpoint, params=params)
++        data = None
++        return self.make_request('put', endpoint, params=params, data=data)
+     
+     
+     def delete_ca_api_corpora_corpusid(self, corpusId):
+@@ -1138,7 +985,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}"
+         params = None
+-        return self.make_request('delete', endpoint, params=params)
++        data = None
++        return self.make_request('delete', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_can_be_compiled(self, corpusId):
+@@ -1148,7 +996,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/can_be_compiled"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_get_progress(self, corpusId):
+@@ -1158,7 +1007,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/get_progress"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_compile(self, corpusId):
+@@ -1168,7 +1018,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/compile"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_logs_logname(self, corpusId, logName):
+@@ -1179,7 +1030,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/logs/{logName}"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_download(self, corpusId, format=None, file_structure=None, aligned=None):
+@@ -1192,11 +1044,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/download"
+         params = {
+-        'format': format,
+-        'file_structure': file_structure,
+-        'aligned': aligned
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'format': format, 'file_structure': file_structure, 'aligned': aligned
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_cancel_job(self, corpusId):
+@@ -1206,7 +1059,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/cancel_job"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_compile_aligned(self):
+@@ -1215,7 +1069,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/compile_aligned"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_align(self):
+@@ -1224,7 +1079,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/align"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_documents(self, corpusId, fileset_id=None):
+@@ -1235,9 +1091,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents"
+         params = {
+-        'fileset_id': fileset_id
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'fileset_id': fileset_id
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_documents(self, corpusId, corpusId_2, fileset_id=None, fileset_id_2=None, wait_with_tagging=None):
+@@ -1251,11 +1110,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId_2}/documents"
+         params = {
+-        'fileset_id': fileset_id,
+-        'fileset_id': fileset_id_2,
+-        'wait_with_tagging': wait_with_tagging
+-    }
+-        return self.make_request('post', endpoint, params=params)
++            'fileset_id': fileset_id, 'fileset_id': fileset_id_2, 'wait_with_tagging': wait_with_tagging
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def put_ca_api_corpora_corpusid_documents(self, corpusId, fileset_id=None):
+@@ -1266,9 +1126,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents"
+         params = {
+-        'fileset_id': fileset_id
+-    }
+-        return self.make_request('put', endpoint, params=params)
++            'fileset_id': fileset_id
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('put', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_documents_documentid(self, corpusId, documentId):
+@@ -1279,7 +1142,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def put_ca_api_corpora_corpusid_documents_documentid(self, corpusId, documentId):
+@@ -1290,7 +1154,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}"
+         params = None
+-        return self.make_request('put', endpoint, params=params)
++        data = None
++        return self.make_request('put', endpoint, params=params, data=data)
+     
+     
+     def delete_ca_api_corpora_corpusid_documents_documentid(self, corpusId, documentId):
+@@ -1301,7 +1166,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}"
+         params = None
+-        return self.make_request('delete', endpoint, params=params)
++        data = None
++        return self.make_request('delete', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_documents_documentid_preview(self, corpusId, documentId):
+@@ -1312,7 +1178,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/preview"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_documents_documentid_original(self, corpusId, documentId):
+@@ -1323,7 +1190,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/original"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_documents_documentid_plaintext(self, corpusId, documentId):
+@@ -1334,7 +1202,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/plaintext"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_documents_documentid_vertical(self, corpusId, documentId):
+@@ -1345,7 +1214,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/vertical"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_documents_documentid_expand_archive(self, corpusId, documentId):
+@@ -1356,7 +1226,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/expand_archive"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_documents_documentid_cancel_job(self, corpusId, documentId):
+@@ -1367,7 +1238,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/cancel_job"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_documents_documentid_get_progress(self, corpusId, documentId):
+@@ -1378,7 +1250,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/get_progress"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_filesets(self, corpusId, compile_when_finished=None):
+@@ -1389,9 +1262,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/filesets"
+         params = {
+-        'compile_when_finished': compile_when_finished
+-    }
+-        return self.make_request('get', endpoint, params=params)
++            'compile_when_finished': compile_when_finished
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_filesets(self, corpusId, compile_when_finished=None):
+@@ -1402,9 +1278,12 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/filesets"
+         params = {
+-        'compile_when_finished': compile_when_finished
+-    }
+-        return self.make_request('post', endpoint, params=params)
++            'compile_when_finished': compile_when_finished
++        }
++        # Filter out None values
++        params = {k: v for k, v in params.items() if v is not None}
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_corpora_corpusid_filesets_filesetid(self, corpusId, filesetId):
+@@ -1415,7 +1294,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def delete_ca_api_corpora_corpusid_filesets_filesetid(self, corpusId, filesetId):
+@@ -1426,7 +1306,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}"
+         params = None
+-        return self.make_request('delete', endpoint, params=params)
++        data = None
++        return self.make_request('delete', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_filesets_filesetid_cancel_job(self, corpusId, filesetId):
+@@ -1437,7 +1318,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}/cancel_job"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_corpora_corpusid_filesets_filesetid_get_progress(self, corpusId, filesetId):
+@@ -1448,7 +1330,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}/get_progress"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_languages(self):
+@@ -1457,7 +1340,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/languages"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_somefiles(self):
+@@ -1466,7 +1350,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/somefiles"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_somefiles_somefileid(self, somefileId):
+@@ -1476,7 +1361,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/somefiles/{somefileId}"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def put_ca_api_somefiles_somefileid(self, somefileId):
+@@ -1486,7 +1372,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/somefiles/{somefileId}"
+         params = None
+-        return self.make_request('put', endpoint, params=params)
++        data = None
++        return self.make_request('put', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_tagsets_templateid(self, templateId):
+@@ -1496,7 +1383,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/tagsets/{templateId}"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+     def put_ca_api_tagsets_templateid(self, templateId):
+@@ -1506,7 +1394,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/tagsets/{templateId}"
+         params = None
+-        return self.make_request('put', endpoint, params=params)
++        data = None
++        return self.make_request('put', endpoint, params=params, data=data)
+     
+     
+     def delete_ca_api_tagsets_templateid(self, templateId):
+@@ -1516,7 +1405,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/tagsets/{templateId}"
+         params = None
+-        return self.make_request('delete', endpoint, params=params)
++        data = None
++        return self.make_request('delete', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_users_me_get_used_space(self):
+@@ -1525,7 +1415,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/users/me/get_used_space"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def post_ca_api_octerms_datasets(self):
+@@ -1534,7 +1425,8 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/octerms/datasets"
+         params = None
+-        return self.make_request('post', endpoint, params=params)
++        data = None
++        return self.make_request('post', endpoint, params=params, data=data)
+     
+     
+     def get_ca_api_octerms_datasets_datasetid(self, datasetId):
+@@ -1544,6 +1436,7 @@ class SketchEngineClient:
+     """
+         endpoint = f"/ca/api/octerms/datasets/{datasetId}"
+         params = None
+-        return self.make_request('get', endpoint, params=params)
++        data = None
++        return self.make_request('get', endpoint, params=params, data=data)
+     
+     
+\ No newline at end of file
+diff --git a/client_generator.py b/client_generator.py
+index be048c9..ba5248a 100644
+--- a/client_generator.py
++++ b/client_generator.py
+@@ -92,6 +92,7 @@ def build_function_code(func_name: str, method: str, path: str, parameters: list
+ 
+     path_params = []
+     query_params = []
++    body_params = []
+     doc_lines = [f'"""{method.upper()} {path}', "Parameters:"]
+ 
+     # We'll keep a list of all param names to detect duplicates
+@@ -112,22 +113,25 @@ def build_function_code(func_name: str, method: str, path: str, parameters: list
+         used_names[candidate] = True
+         return candidate
+ 
+-    # We store (py_name, openapi_name, location, description).
++    # We store (py_name, openapi_name, location, description)
+     path_param_list = []
+     query_param_list = []
++    body_param_list = []
+ 
+     for p in resolved_params:
+         p_in = p.get('in', 'query')
+         p_name = p.get('name', 'param')
+-        desc  = p.get('description', '')
++        desc = p.get('description', '')
+ 
+-        py_name = get_unique_name(p_name)  # sanitize for Python
++        py_name = get_unique_name(p_name)
+         doc_lines.append(f"  :param {py_name}: ({p_in}) {desc}".rstrip())
+ 
+         if p_in == 'path':
+             path_param_list.append((py_name, p_name))
+         elif p_in == 'query':
+             query_param_list.append((py_name, p_name))
++        elif p_in == 'body':
++            body_param_list.append((py_name, p_name))
+ 
+     doc_lines.append('"""')
+     docstring = "\n".join(doc_lines)
+@@ -160,24 +164,41 @@ def build_function_code(func_name: str, method: str, path: str, parameters: list
+ 
+     # Build dict of query params
+     if query_param_list:
+-        # 'openapi_name': python_var
+-        # but we need to map python_var to the user’s variable name
+-        # e.g. 'corpname': corpname
+-        items = []
+-        for (py_name, openapi_name) in query_param_list:
+-            items.append(f"'{openapi_name}': {py_name}")
+-        indent_str = "    "
+-        params_code = "params = {\n" + indent_str + (",\n"+indent_str).join(items) + "\n}"
++        params_items = [f"'{openapi_name}': {py_name}" for py_name, openapi_name in query_param_list]
++        params_dict = ", ".join(params_items)
++        params_code = [
++            "    params = {",
++            f"        {params_dict}",
++            "    }",
++            "    # Filter out None values",
++            "    params = {k: v for k, v in params.items() if v is not None}"
++        ]
++        params_code = "\n".join(params_code)
+     else:
+-        params_code = "params = None"
++        params_code = "    params = None"
++
++    # Build request body for POST/PUT methods
++    if method.lower() in ['post', 'put'] and body_param_list:
++        body_items = [f"'{openapi_name}': {py_name}" for py_name, openapi_name in body_param_list]
++        body_dict = ", ".join(body_items)
++        data_code = [
++            "    data = {",
++            f"        {body_dict}",
++            "    }",
++            "    # Filter out None values",
++            "    data = {k: v for k, v in data.items() if v is not None}"
++        ]
++        data_code = "\n".join(data_code)
++    else:
++        data_code = "    data = None"
+ 
+-    method_lower = method.lower()
+     lines = [
+-        f"def {func_name}({signature}):",
++        f"def {func_name}({signature}):",  # No indentation for method definition
+         f"    {docstring}",
+-        f"    endpoint = f\"{f_str_path}\"",  # Now we just need the path part
+-        f"    {params_code}",
+-        f"    return self.make_request('{method.lower()}', endpoint, params=params)",
++        f"    endpoint = f\"{f_str_path}\"",
++        f"{params_code}",
++        f"{data_code}",
++        f"    return self.make_request('{method.lower()}', endpoint, params=params, data=data)",
+         "\n"
+     ]
+     return "\n".join(lines)
