@@ -15,34 +15,38 @@ class SketchEngineClient:
             'Authorization': f'Bearer {self.api_key}'
         })
 
-    def make_request(self, method, endpoint, params=None, data=None):
+    def make_request(self, method, endpoint, params=None, data=None, files=None):
         """
         Make a request to the Sketch Engine API
 
         Args:
-            method (str): HTTP method ('GET', 'POST', etc.)
+            method (str): HTTP method
             endpoint (str): API endpoint path
-            params (dict, optional): Query parameters
-            data (dict, optional): Request body for POST/PUT requests
+            params (dict, optional): query parameters
+            data (dict or None, optional): JSON or form data
+            files (dict or None, optional): For multipart form-data
 
         Returns:
-            requests.Response: Response from the API
+            requests.Response
         """
         url = f"{self.BASE_URL}{endpoint}"
         try:
-            response = self.session.request(
-                method=method,
-                url=url,
-                params=params,
-                json=data
-            )
+            if files:
+                # multipart form-data likely
+                response = self.session.request(method=method, url=url, params=params, data=data, files=files)
+            else:
+                # normal JSON or query usage
+                if method.upper() in ['POST','PUT','PATCH'] and isinstance(data, dict) and not files:
+                    # We'll guess it's JSON
+                    response = self.session.request(method=method, url=url, params=params, json=data)
+                else:
+                    response = self.session.request(method=method, url=url, params=params, json=data)
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
             raise
 
-
-    def get_search_corp_info(self, corpname=None, usesubcorp=None, subcorpora=None, gramrels=None, corpcheck=None, registry=None, struct_attr_stats=None, format=None):
+    def get_search_corp_info(self, corpname, usesubcorp=None, subcorpora=None, gramrels=None, corpcheck=None, registry=None, struct_attr_stats=None, format=None):
         """GET /search/corp_info
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -54,17 +58,26 @@ class SketchEngineClient:
       :param struct_attr_stats: (query) The lexicon sizes of structure attributes.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
         endpoint = f"/search/corp_info"
         params = {
-            'corpname': corpname, 'usesubcorp': usesubcorp, 'subcorpora': subcorpora, 'gramrels': gramrels, 'corpcheck': corpcheck, 'registry': registry, 'struct_attr_stats': struct_attr_stats, 'format': format
+            'corpname': corpname,
+            'usesubcorp': usesubcorp,
+            'subcorpora': subcorpora,
+            'gramrels': gramrels,
+            'corpcheck': corpcheck,
+            'registry': registry,
+            'struct_attr_stats': struct_attr_stats,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_wordlist(self, corpname=None, wlattr=None, usesubcorp=None, wlnums=None, wlmaxfreq=None, wlminfreq=None, wlpat=None, wlsort=None, wlblacklist=None, include_nonwords=None, relfreq=None, reldocf=None, wlfile=None, wlicase=None, wlmaxitems=None, wlpage=None, format=None, random=None, wltype=None, ngrams_n=None, ngrams_max_n=None, nest_ngrams=None, simple_n=None, usengrams=None):
+    def get_search_wordlist(self, corpname, wlattr, usesubcorp=None, wlnums=None, wlmaxfreq=None, wlminfreq=None, wlpat=None, wlsort=None, wlblacklist=None, include_nonwords=None, relfreq=None, reldocf=None, wlfile=None, wlicase=None, wlmaxitems=None, wlpage=None, format=None, random=None, wltype=None, ngrams_n=None, ngrams_max_n=None, nest_ngrams=None, simple_n=None, usengrams=None):
         """GET /search/wordlist
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -104,17 +117,43 @@ class SketchEngineClient:
       :param simple_n: (query) The smoothing parameter for (simple maths) [https://www.sketchengine.eu/documentation/simple-maths/].
       :param usengrams: (query) Represent if n-grams should be extracted or just simple keywords.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if wlattr is None: raise ValueError("Parameter 'wlattr' is required.")
         endpoint = f"/search/wordlist"
         params = {
-            'corpname': corpname, 'wlattr': wlattr, 'usesubcorp': usesubcorp, 'wlnums': wlnums, 'wlmaxfreq': wlmaxfreq, 'wlminfreq': wlminfreq, 'wlpat': wlpat, 'wlsort': wlsort, 'wlblacklist': wlblacklist, 'include_nonwords': include_nonwords, 'relfreq': relfreq, 'reldocf': reldocf, 'wlfile': wlfile, 'wlicase': wlicase, 'wlmaxitems': wlmaxitems, 'wlpage': wlpage, 'format': format, 'random': random, 'wltype': wltype, 'ngrams_n': ngrams_n, 'ngrams_max_n': ngrams_max_n, 'nest_ngrams': nest_ngrams, 'simple_n': simple_n, 'usengrams': usengrams
+            'corpname': corpname,
+            'wlattr': wlattr,
+            'usesubcorp': usesubcorp,
+            'wlnums': wlnums,
+            'wlmaxfreq': wlmaxfreq,
+            'wlminfreq': wlminfreq,
+            'wlpat': wlpat,
+            'wlsort': wlsort,
+            'wlblacklist': wlblacklist,
+            'include_nonwords': include_nonwords,
+            'relfreq': relfreq,
+            'reldocf': reldocf,
+            'wlfile': wlfile,
+            'wlicase': wlicase,
+            'wlmaxitems': wlmaxitems,
+            'wlpage': wlpage,
+            'format': format,
+            'random': random,
+            'wltype': wltype,
+            'ngrams_n': ngrams_n,
+            'ngrams_max_n': ngrams_max_n,
+            'nest_ngrams': nest_ngrams,
+            'simple_n': simple_n,
+            'usengrams': usengrams,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_struct_wordlist(self, corpname=None, wlattr=None, wlstruct_attr1=None, wlstruct_attr2=None, wlstruct_attr3=None, wlnums=None, wlmaxfreq=None, wlminfreq=None, wlmaxitems=None, wlpat=None, wlsort=None, wlblacklist=None, include_nonwords=None, relfreq=None, reldocf=None, wlicase=None, wlpage=None, format=None, random=None, wltype=None):
+    def get_search_struct_wordlist(self, corpname, wlattr, wlstruct_attr1, wlstruct_attr2=None, wlstruct_attr3=None, wlnums=None, wlmaxfreq=None, wlminfreq=None, wlmaxitems=None, wlpat=None, wlsort=None, wlblacklist=None, include_nonwords=None, relfreq=None, reldocf=None, wlicase=None, wlpage=None, format=None, random=None, wltype=None):
         """GET /search/struct_wordlist
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -150,17 +189,40 @@ class SketchEngineClient:
       :param random: (query) Parameter that represents if the wordlist is created from the first 10 milions lines of corpus. One if yes, no if he wordlist is created from the whole corpus.
       :param wltype: (query) Parameter to set the format of ouput. Is it always set to `simple`, for the `struct_wordlist` is another enpoint called `struct_wordlist`.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if wlattr is None: raise ValueError("Parameter 'wlattr' is required.")
+        if wlstruct_attr1 is None: raise ValueError("Parameter 'wlstruct_attr1' is required.")
         endpoint = f"/search/struct_wordlist"
         params = {
-            'corpname': corpname, 'wlattr': wlattr, 'wlstruct_attr1': wlstruct_attr1, 'wlstruct_attr2': wlstruct_attr2, 'wlstruct_attr3': wlstruct_attr3, 'wlnums': wlnums, 'wlmaxfreq': wlmaxfreq, 'wlminfreq': wlminfreq, 'wlmaxitems': wlmaxitems, 'wlpat': wlpat, 'wlsort': wlsort, 'wlblacklist': wlblacklist, 'include_nonwords': include_nonwords, 'relfreq': relfreq, 'reldocf': reldocf, 'wlicase': wlicase, 'wlpage': wlpage, 'format': format, 'random': random, 'wltype': wltype
+            'corpname': corpname,
+            'wlattr': wlattr,
+            'wlstruct_attr1': wlstruct_attr1,
+            'wlstruct_attr2': wlstruct_attr2,
+            'wlstruct_attr3': wlstruct_attr3,
+            'wlnums': wlnums,
+            'wlmaxfreq': wlmaxfreq,
+            'wlminfreq': wlminfreq,
+            'wlmaxitems': wlmaxitems,
+            'wlpat': wlpat,
+            'wlsort': wlsort,
+            'wlblacklist': wlblacklist,
+            'include_nonwords': include_nonwords,
+            'relfreq': relfreq,
+            'reldocf': reldocf,
+            'wlicase': wlicase,
+            'wlpage': wlpage,
+            'format': format,
+            'random': random,
+            'wltype': wltype,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_wsketch(self, corpname=None, lemma=None, lpos=None, usesubcorp=None, minfreq=None, minscore=None, minsim=None, maxitems=None, clustercolls=None, expand_seppage=None, sort_ws_columns=None, structured=None, bim_corpname=None, bim_lemma=None, bim_lpos=None, format=None):
+    def get_search_wsketch(self, corpname, lemma, lpos=None, usesubcorp=None, minfreq=None, minscore=None, minsim=None, maxitems=None, clustercolls=None, expand_seppage=None, sort_ws_columns=None, structured=None, bim_corpname=None, bim_lemma=None, bim_lpos=None, format=None):
         """GET /search/wsketch
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -180,17 +242,35 @@ class SketchEngineClient:
       :param bim_lpos: (query) Sets the lpos, the part of speeach of the lemma in the of second corpus. Used in bilingual word sketches.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if lemma is None: raise ValueError("Parameter 'lemma' is required.")
         endpoint = f"/search/wsketch"
         params = {
-            'corpname': corpname, 'lemma': lemma, 'lpos': lpos, 'usesubcorp': usesubcorp, 'minfreq': minfreq, 'minscore': minscore, 'minsim': minsim, 'maxitems': maxitems, 'clustercolls': clustercolls, 'expand_seppage': expand_seppage, 'sort_ws_columns': sort_ws_columns, 'structured': structured, 'bim_corpname': bim_corpname, 'bim_lemma': bim_lemma, 'bim_lpos': bim_lpos, 'format': format
+            'corpname': corpname,
+            'lemma': lemma,
+            'lpos': lpos,
+            'usesubcorp': usesubcorp,
+            'minfreq': minfreq,
+            'minscore': minscore,
+            'minsim': minsim,
+            'maxitems': maxitems,
+            'clustercolls': clustercolls,
+            'expand_seppage': expand_seppage,
+            'sort_ws_columns': sort_ws_columns,
+            'structured': structured,
+            'bim_corpname': bim_corpname,
+            'bim_lemma': bim_lemma,
+            'bim_lpos': bim_lpos,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_thes(self, corpname=None, lemma=None, lpos=None, usesubcorp=None, minthesscore=None, maxthesitems=None, clusteritems=None, minsim=None, format=None):
+    def get_search_thes(self, corpname, lemma, lpos=None, usesubcorp=None, minthesscore=None, maxthesitems=None, clusteritems=None, minsim=None, format=None):
         """GET /search/thes
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -203,17 +283,28 @@ class SketchEngineClient:
       :param minsim: (query) The minimum similarity between clustered items. Only used when `clustercolls` is set to 1. Lower values produce more groups containing fewer collocations. Higher values produce fewer groups containing more collocations. The same value can produce different results with different words.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if lemma is None: raise ValueError("Parameter 'lemma' is required.")
         endpoint = f"/search/thes"
         params = {
-            'corpname': corpname, 'lemma': lemma, 'lpos': lpos, 'usesubcorp': usesubcorp, 'minthesscore': minthesscore, 'maxthesitems': maxthesitems, 'clusteritems': clusteritems, 'minsim': minsim, 'format': format
+            'corpname': corpname,
+            'lemma': lemma,
+            'lpos': lpos,
+            'usesubcorp': usesubcorp,
+            'minthesscore': minthesscore,
+            'maxthesitems': maxthesitems,
+            'clusteritems': clusteritems,
+            'minsim': minsim,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_wsdiff(self, corpname=None, lemma=None, lpos=None, diff_by=None, lemma2=None, minfreq=None, maxcommon=None, separate_blocks=None, maxexclusive=None, wordform1=None, wordform2=None, subcorp1=None, subcorp2=None, format=None):
+    def get_search_wsdiff(self, corpname, lemma, lpos=None, diff_by=None, lemma2=None, minfreq=None, maxcommon=None, separate_blocks=None, maxexclusive=None, wordform1=None, wordform2=None, subcorp1=None, subcorp2=None, format=None):
         """GET /search/wsdiff
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -237,17 +328,33 @@ class SketchEngineClient:
       :param subcorp2: (query) The second subcorpus for searching collocates for wsdiff of the lemma you want. `diff_by` must be set to `subcorpus`.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if lemma is None: raise ValueError("Parameter 'lemma' is required.")
         endpoint = f"/search/wsdiff"
         params = {
-            'corpname': corpname, 'lemma': lemma, 'lpos': lpos, 'diff_by': diff_by, 'lemma2': lemma2, 'minfreq': minfreq, 'maxcommon': maxcommon, 'separate_blocks': separate_blocks, 'maxexclusive': maxexclusive, 'wordform1': wordform1, 'wordform2': wordform2, 'subcorp1': subcorp1, 'subcorp2': subcorp2, 'format': format
+            'corpname': corpname,
+            'lemma': lemma,
+            'lpos': lpos,
+            'diff_by': diff_by,
+            'lemma2': lemma2,
+            'minfreq': minfreq,
+            'maxcommon': maxcommon,
+            'separate_blocks': separate_blocks,
+            'maxexclusive': maxexclusive,
+            'wordform1': wordform1,
+            'wordform2': wordform2,
+            'subcorp1': subcorp1,
+            'subcorp2': subcorp2,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_concordance(self, corpname=None, q=None, concordance_query_queryselector=None, concordance_query_iquery=None, concordance_query_cql=None, concordance_query_lemma=None, concordance_query_char=None, concordance_query_word=None, concordance_query_phrase=None, usesubcorp=None, lpos=None, default_attr=None, attrs=None, refs=None, attr_allpos=None, viewmode=None, cup_hl=None, structs=None, fromp=None, pagesize=None, kwicleftctx=None, kwicrightctx=None, errcorr_switch=None, cup_err_code=None, cup_err=None, cup_corr=None, json=None, asyn=None, format=None):
+    def get_search_concordance(self, corpname, q=None, concordance_query_queryselector=None, concordance_query_iquery=None, concordance_query_cql=None, concordance_query_lemma=None, concordance_query_char=None, concordance_query_word=None, concordance_query_phrase=None, usesubcorp=None, lpos=None, default_attr=None, attrs=None, refs=None, attr_allpos=None, viewmode=None, cup_hl=None, structs=None, fromp=None, pagesize=None, kwicleftctx=None, kwicrightctx=None, errcorr_switch=None, cup_err_code=None, cup_err=None, cup_corr=None, json=None, asyn=None, format=None):
         """GET /search/concordance
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -326,37 +433,72 @@ class SketchEngineClient:
     
      `desc`: 
     
-     `q`:
+     `q`: 
+    
+    
       :param asyn: (query) Switches the asynchronous processing on/off. ON = partial results are returned as soon as the first page is filled with results. OFF = results are returned only after the search is completed. Normally, ON is used in the web interface and OFF when using the API.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
         endpoint = f"/search/concordance"
         params = {
-            'corpname': corpname, 'q': q, 'concordance_query[queryselector]': concordance_query_queryselector, 'concordance_query[iquery]': concordance_query_iquery, 'concordance_query[cql]': concordance_query_cql, 'concordance_query[lemma]': concordance_query_lemma, 'concordance_query[char]': concordance_query_char, 'concordance_query[word]': concordance_query_word, 'concordance_query[phrase]': concordance_query_phrase, 'usesubcorp': usesubcorp, 'lpos': lpos, 'default_attr': default_attr, 'attrs': attrs, 'refs': refs, 'attr_allpos': attr_allpos, 'viewmode': viewmode, 'cup_hl': cup_hl, 'structs': structs, 'fromp': fromp, 'pagesize': pagesize, 'kwicleftctx': kwicleftctx, 'kwicrightctx': kwicrightctx, 'errcorr_switch': errcorr_switch, 'cup_err_code': cup_err_code, 'cup_err': cup_err, 'cup_corr': cup_corr, 'json': json, 'asyn': asyn, 'format': format
+            'corpname': corpname,
+            'q': q,
+            'concordance_query[queryselector]': concordance_query_queryselector,
+            'concordance_query[iquery]': concordance_query_iquery,
+            'concordance_query[cql]': concordance_query_cql,
+            'concordance_query[lemma]': concordance_query_lemma,
+            'concordance_query[char]': concordance_query_char,
+            'concordance_query[word]': concordance_query_word,
+            'concordance_query[phrase]': concordance_query_phrase,
+            'usesubcorp': usesubcorp,
+            'lpos': lpos,
+            'default_attr': default_attr,
+            'attrs': attrs,
+            'refs': refs,
+            'attr_allpos': attr_allpos,
+            'viewmode': viewmode,
+            'cup_hl': cup_hl,
+            'structs': structs,
+            'fromp': fromp,
+            'pagesize': pagesize,
+            'kwicleftctx': kwicleftctx,
+            'kwicrightctx': kwicrightctx,
+            'errcorr_switch': errcorr_switch,
+            'cup_err_code': cup_err_code,
+            'cup_err': cup_err,
+            'cup_corr': cup_corr,
+            'json': json,
+            'asyn': asyn,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_fullref(self, corpname=None, pos=None):
+    def get_search_fullref(self, corpname, pos=None):
         """GET /search/fullref
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
       :param pos: (query) The position of the first token of KWIC in the corpus.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
         endpoint = f"/search/fullref"
         params = {
-            'corpname': corpname, 'pos': pos
+            'corpname': corpname,
+            'pos': pos,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_widectx(self, corpname=None, pos=None, hitlen=None, structs=None, detail_left_ctx=None, detail_right_ctx=None):
+    def get_search_widectx(self, corpname, pos=None, hitlen=None, structs=None, detail_left_ctx=None, detail_right_ctx=None):
         """GET /search/widectx
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -366,17 +508,24 @@ class SketchEngineClient:
       :param detail_left_ctx: (query) Size of the left context in tokens.
       :param detail_right_ctx: (query) Size of the right context in tokens.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
         endpoint = f"/search/widectx"
         params = {
-            'corpname': corpname, 'pos': pos, 'hitlen': hitlen, 'structs': structs, 'detail_left_ctx': detail_left_ctx, 'detail_right_ctx': detail_right_ctx
+            'corpname': corpname,
+            'pos': pos,
+            'hitlen': hitlen,
+            'structs': structs,
+            'detail_left_ctx': detail_left_ctx,
+            'detail_right_ctx': detail_right_ctx,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_freqml(self, corpname=None, ml1attr=None, ml1ctx=None, ml2attr=None, ml2ctx=None, ml3attr=None, ml3ctx=None, ml4attr=None, ml4ctx=None, ml5attr=None, ml5ctx=None, ml6attr=None, ml6ctx=None, q=None, usesubcorp=None, fmaxitems=None, fpage=None, group=None, showpoc=None, showreltt=None, showrel=None, freqlevel=None, json=None, freq_sort=None, format=None):
+    def get_search_freqml(self, corpname, ml1attr, ml1ctx, ml2attr=None, ml2ctx=None, ml3attr=None, ml3ctx=None, ml4attr=None, ml4ctx=None, ml5attr=None, ml5ctx=None, ml6attr=None, ml6ctx=None, q=None, usesubcorp=None, fmaxitems=None, fpage=None, group=None, showpoc=None, showreltt=None, showrel=None, freqlevel=None, json=None, freq_sort=None, format=None):
         """GET /search/freqml
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -429,6 +578,8 @@ class SketchEngineClient:
      sword/i **-1**
     
      sword/ **0** word/ir **-1<0** tag/r **-2<0**
+    
+     
       :param ml2attr: (query) Used to count the frequency of positional attributes [attributes](https://www.sketchengine.eu/my_keywords/positional-attribute/). Just like `ml1attr` but optional.
       :param ml2ctx: (query) Position of the selected attribute in the concordance. Minus means left context (-1<0). Plus means right context (6>0). Just like ml1ctx but optional.
       :param ml3attr: (query) Used to count the frequency of positional attributes [attributes](https://www.sketchengine.eu/my_keywords/positional-attribute/). Just like `ml1attr` but optional.
@@ -484,25 +635,55 @@ class SketchEngineClient:
     
      `desc`: 
     
-     `q`:
+     `q`: 
+    
+    
       :param freq_sort: (query) The identifier of the sorted column. Use `frq` (default) to sort by frequency.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if ml1attr is None: raise ValueError("Parameter 'ml1attr' is required.")
+        if ml1ctx is None: raise ValueError("Parameter 'ml1ctx' is required.")
         endpoint = f"/search/freqml"
         params = {
-            'corpname': corpname, 'ml1attr': ml1attr, 'ml1ctx': ml1ctx, 'ml2attr': ml2attr, 'ml2ctx': ml2ctx, 'ml3attr': ml3attr, 'ml3ctx': ml3ctx, 'ml4attr': ml4attr, 'ml4ctx': ml4ctx, 'ml5attr': ml5attr, 'ml5ctx': ml5ctx, 'ml6attr': ml6attr, 'ml6ctx': ml6ctx, 'q': q, 'usesubcorp': usesubcorp, 'fmaxitems': fmaxitems, 'fpage': fpage, 'group': group, 'showpoc': showpoc, 'showreltt': showreltt, 'showrel': showrel, 'freqlevel': freqlevel, 'json': json, 'freq_sort': freq_sort, 'format': format
+            'corpname': corpname,
+            'ml1attr': ml1attr,
+            'ml1ctx': ml1ctx,
+            'ml2attr': ml2attr,
+            'ml2ctx': ml2ctx,
+            'ml3attr': ml3attr,
+            'ml3ctx': ml3ctx,
+            'ml4attr': ml4attr,
+            'ml4ctx': ml4ctx,
+            'ml5attr': ml5attr,
+            'ml5ctx': ml5ctx,
+            'ml6attr': ml6attr,
+            'ml6ctx': ml6ctx,
+            'q': q,
+            'usesubcorp': usesubcorp,
+            'fmaxitems': fmaxitems,
+            'fpage': fpage,
+            'group': group,
+            'showpoc': showpoc,
+            'showreltt': showreltt,
+            'showrel': showrel,
+            'freqlevel': freqlevel,
+            'json': json,
+            'freq_sort': freq_sort,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_freq_distrib(self, corpname=None, res=None, lpos=None, default_attr=None, attrs=None, structs=None, refs=None, attr_allpos=None, viewmode=None, fc_lemword_window_type=None, fc_lemword_wsize=None, fc_lemword_type=None, fc_pos_window_type=None, fc_pos_wsize=None, fc_pos_type=None, json=None, normalize=None, format=None):
+    def get_search_freq_distrib(self, corpname, res=None, lpos=None, default_attr=None, attrs=None, structs=None, refs=None, attr_allpos=None, viewmode=None, fc_lemword_window_type=None, fc_lemword_wsize=None, fc_lemword_type=None, fc_pos_window_type=None, fc_pos_wsize=None, fc_pos_type=None, json=None, normalize=None, format=None):
         """GET /search/freq_distrib
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
-      :param res: (query)
+      :param res: (query) 
       :param lpos: (query) The part of speech of the lemma. The concrete values depend on the corpus. If the corpus contains the `lempos` attribute and `lpos` is empty, the result defaults to the most frequent part of speech of the lemma.
       :param default_attr: (query) The attribute applied to tokens in the query which do not have an attribute specified explicitly as part of the query.
       :param attrs: (query) A list of comma-delimited attributes that are returned together with each token. Other examples are:`word, lc, lemma, tag` etc..
@@ -510,12 +691,12 @@ class SketchEngineClient:
       :param refs: (query) The text type (metadata) for which statistics should be calculated from the concordance. The default is `bncdoc.alltyp` (all available text types are included). Text types (attributes and there values) differ between corpora). You can find them in the response of `corpus_info` method in `freqttattrs` or `subcorpattrs` keys. Not all of them have attributes to show.
       :param attr_allpos: (query) Determines which tokens will be returned with additional attributes defined in `attrs`. `kw` will add the attributes to the KWIC only. `all` will return them with all tokens.
       :param viewmode: (query) Switches between sentence view and the KWIC view. `sen` returns complete sentences without trimming them. `kwic` returns the KWIC view with the query in the centre and some context left and right.
-      :param fc_lemword_window_type: (query)
-      :param fc_lemword_wsize: (query)
-      :param fc_lemword_type: (query)
-      :param fc_pos_window_type: (query)
-      :param fc_pos_wsize: (query)
-      :param fc_pos_type: (query)
+      :param fc_lemword_window_type: (query) 
+      :param fc_lemword_wsize: (query) 
+      :param fc_lemword_type: (query) 
+      :param fc_pos_window_type: (query) 
+      :param fc_pos_wsize: (query) 
+      :param fc_pos_type: (query) 
       :param json: (query) An optinal way of **wraping parameters**. It is possible to send all parametres via this parameter only.
     
      The most frequent uses are:
@@ -552,21 +733,42 @@ class SketchEngineClient:
     
      `desc`: 
     
-     `q`:
-      :param normalize: (query)
+     `q`: 
+    
+    
+      :param normalize: (query) 
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
         endpoint = f"/search/freq_distrib"
         params = {
-            'corpname': corpname, 'res': res, 'lpos': lpos, 'default_attr': default_attr, 'attrs': attrs, 'structs': structs, 'refs': refs, 'attr_allpos': attr_allpos, 'viewmode': viewmode, 'fc_lemword_window_type': fc_lemword_window_type, 'fc_lemword_wsize': fc_lemword_wsize, 'fc_lemword_type': fc_lemword_type, 'fc_pos_window_type': fc_pos_window_type, 'fc_pos_wsize': fc_pos_wsize, 'fc_pos_type': fc_pos_type, 'json': json, 'normalize': normalize, 'format': format
+            'corpname': corpname,
+            'res': res,
+            'lpos': lpos,
+            'default_attr': default_attr,
+            'attrs': attrs,
+            'structs': structs,
+            'refs': refs,
+            'attr_allpos': attr_allpos,
+            'viewmode': viewmode,
+            'fc_lemword_window_type': fc_lemword_window_type,
+            'fc_lemword_wsize': fc_lemword_wsize,
+            'fc_lemword_type': fc_lemword_type,
+            'fc_pos_window_type': fc_pos_window_type,
+            'fc_pos_wsize': fc_pos_wsize,
+            'fc_pos_type': fc_pos_type,
+            'json': json,
+            'normalize': normalize,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_freqdist(self, corpname=None, wlattr=None, diaattr=None, sse=None, threshold=None, ctx=None, wordlist=None, json=None):
+    def get_search_freqdist(self, corpname, wlattr, diaattr, sse, threshold, ctx=None, wordlist=None, json=None):
         """GET /search/freqdist
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -639,22 +841,39 @@ class SketchEngineClient:
      word/ir **-1<0**
     
      tag/r **-2<0**
+    
+     
       :param wordlist: (query) A wordlist of words for which the relative frequency should be counted. No exact example is here because it is already set in `JSON` parameter.\Example: ['the','a','lion'].
       :param json: (query) An optinal way of **wraping parameters**. It is possible to send all relevant parametres via this parameter only. It is classic JSON format.
     
      `wordlist`: words for which the relative frequency should be counted.
+    
+    
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if wlattr is None: raise ValueError("Parameter 'wlattr' is required.")
+        if diaattr is None: raise ValueError("Parameter 'diaattr' is required.")
+        if sse is None: raise ValueError("Parameter 'sse' is required.")
+        if threshold is None: raise ValueError("Parameter 'threshold' is required.")
         endpoint = f"/search/freqdist"
         params = {
-            'corpname': corpname, 'wlattr': wlattr, 'diaattr': diaattr, 'sse': sse, 'threshold': threshold, 'ctx': ctx, 'wordlist': wordlist, 'json': json
+            'corpname': corpname,
+            'wlattr': wlattr,
+            'diaattr': diaattr,
+            'sse': sse,
+            'threshold': threshold,
+            'ctx': ctx,
+            'wordlist': wordlist,
+            'json': json,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_collx(self, corpname=None, q=None, usesubcorp=None, cattr=None, csortfn=None, cbgrfns=None, cfromw=None, ctow=None, cminfreq=None, cminbgr=None, cmaxitems=None, json=None):
+    def get_search_collx(self, corpname, q=None, usesubcorp=None, cattr=None, csortfn=None, cbgrfns=None, cfromw=None, ctow=None, cminfreq=None, cminbgr=None, cmaxitems=None, json=None):
         """GET /search/collx
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -712,17 +931,30 @@ class SketchEngineClient:
     
      `cbgrfns`: If you need to send more cbgrfnsDefines the types of statistics (association measures) to be computed. See example.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
         endpoint = f"/search/collx"
         params = {
-            'corpname': corpname, 'q': q, 'usesubcorp': usesubcorp, 'cattr': cattr, 'csortfn': csortfn, 'cbgrfns': cbgrfns, 'cfromw': cfromw, 'ctow': ctow, 'cminfreq': cminfreq, 'cminbgr': cminbgr, 'cmaxitems': cmaxitems, 'json': json
+            'corpname': corpname,
+            'q': q,
+            'usesubcorp': usesubcorp,
+            'cattr': cattr,
+            'csortfn': csortfn,
+            'cbgrfns': cbgrfns,
+            'cfromw': cfromw,
+            'ctow': ctow,
+            'cminfreq': cminfreq,
+            'cminbgr': cminbgr,
+            'cmaxitems': cmaxitems,
+            'json': json,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_subcorp(self, corpname=None, subcname=None, create=None, delete=None, q=None, struct=None, json=None, format=None):
+    def get_search_subcorp(self, corpname, subcname, create=None, delete=None, q=None, struct=None, json=None, format=None):
         """GET /search/subcorp
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -814,50 +1046,70 @@ class SketchEngineClient:
         **{"sca_doc.id":["file29173711"],"sca_doc.filename":["Filename.pdf"]}**
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if subcname is None: raise ValueError("Parameter 'subcname' is required.")
         endpoint = f"/search/subcorp"
         params = {
-            'corpname': corpname, 'subcname': subcname, 'create': create, 'delete': delete, 'q': q, 'struct': struct, 'json': json, 'format': format
+            'corpname': corpname,
+            'subcname': subcname,
+            'create': create,
+            'delete': delete,
+            'q': q,
+            'struct': struct,
+            'json': json,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_subcorpus_rename(self, corpname=None, subcorp_id=None, new_subcorp_name=None):
+    def get_search_subcorpus_rename(self, corpname, subcorp_id, new_subcorp_name):
         """GET /search/subcorpus_rename
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
       :param subcorp_id: (query) The name of subcorpus you want to rename.
       :param new_subcorp_name: (query) A new name for the subcorpus.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if subcorp_id is None: raise ValueError("Parameter 'subcorp_id' is required.")
+        if new_subcorp_name is None: raise ValueError("Parameter 'new_subcorp_name' is required.")
         endpoint = f"/search/subcorpus_rename"
         params = {
-            'corpname': corpname, 'subcorp_id': subcorp_id, 'new_subcorp_name': new_subcorp_name
+            'corpname': corpname,
+            'subcorp_id': subcorp_id,
+            'new_subcorp_name': new_subcorp_name,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_subcorp_info(self, corpname=None, subcname=None):
+    def get_search_subcorp_info(self, corpname, subcname):
         """GET /search/subcorp_info
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
       :param subcname: (query) Name of the subcorpus.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if subcname is None: raise ValueError("Parameter 'subcname' is required.")
         endpoint = f"/search/subcorp_info"
         params = {
-            'corpname': corpname, 'subcname': subcname
+            'corpname': corpname,
+            'subcname': subcname,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_extract_keywords(self, corpname=None, ref_corpname=None, usesubcorp=None, simple_n=None, wlfile=None, wlblacklist=None, attr=None, alnum=None, onealpha=None, minfreq=None, maxfreq=None, max_keywords=None, include_nonwords=None, icase=None, wlpat=None, addfreqs=None, reldocf=None, usengrams=None, ngrams_n=None, ngrams_max_n=None, format=None):
+    def get_search_extract_keywords(self, corpname, ref_corpname, usesubcorp=None, simple_n=None, wlfile=None, wlblacklist=None, attr=None, alnum=None, onealpha=None, minfreq=None, maxfreq=None, max_keywords=None, include_nonwords=None, icase=None, wlpat=None, addfreqs=None, reldocf=None, usengrams=None, ngrams_n=None, ngrams_max_n=None, format=None):
         """GET /search/extract_keywords
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -874,12 +1126,12 @@ class SketchEngineClient:
     
      For terms, set the attribute to `TERM`.
     
-     For collocations (word sketch triples, equivalent of using the Word Sketch with AS A LIST option in the web interace), set the attribute to `WSCOLLOC`. Consider using `wlpat`.
+     For collocations (word sketch triples, equivalent of using the Word Sketch with AS A LIST option in the web interace), set the attribute to `WSCOLLOC`. Consider using `wlpat`. 
       :param alnum: (query) Limits the results to items containing only alphanumeric characters.
       :param onealpha: (query) Limits the results to items containing at least one alphanumberic character. Words such as 16-year-old or 3D will be included.
       :param minfreq: (query) Sets the minimum frequency of the item.
       :param maxfreq: (query) Sets the maximum frequency of the item.
-      :param max_keywords: (query)
+      :param max_keywords: (query) 
       :param include_nonwords: (query) Includes, or excludes, nonwords in the in the result. Nonwords are tokens which do not start with letter of the alphabet (e.g. numbers, punctuation). The regex to match the nonwords is `[^[:alpha:]].*`. Certain specialized corpora may use their own specific definition of nonwords.
       :param icase: (query) Switches to the `lc` attribute, i.e. the lower-cased version of the corpus to allow case insensitive searching. `1` means that case sensitivity is off, `0` means it is on.
       :param wlpat: (query) Sets a regex to filter the results. Relevant only in a simple wordlist.
@@ -890,32 +1142,57 @@ class SketchEngineClient:
       :param ngrams_max_n: (query) The maximum n-gram length. The maximum is `6`.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if ref_corpname is None: raise ValueError("Parameter 'ref_corpname' is required.")
         endpoint = f"/search/extract_keywords"
         params = {
-            'corpname': corpname, 'ref_corpname': ref_corpname, 'usesubcorp': usesubcorp, 'simple_n': simple_n, 'wlfile': wlfile, 'wlblacklist': wlblacklist, 'attr': attr, 'alnum': alnum, 'onealpha': onealpha, 'minfreq': minfreq, 'maxfreq': maxfreq, 'max_keywords': max_keywords, 'include_nonwords': include_nonwords, 'icase': icase, 'wlpat': wlpat, 'addfreqs': addfreqs, 'reldocf': reldocf, 'usengrams': usengrams, 'ngrams_n': ngrams_n, 'ngrams_max_n': ngrams_max_n, 'format': format
+            'corpname': corpname,
+            'ref_corpname': ref_corpname,
+            'usesubcorp': usesubcorp,
+            'simple_n': simple_n,
+            'wlfile': wlfile,
+            'wlblacklist': wlblacklist,
+            'attr': attr,
+            'alnum': alnum,
+            'onealpha': onealpha,
+            'minfreq': minfreq,
+            'maxfreq': maxfreq,
+            'max_keywords': max_keywords,
+            'include_nonwords': include_nonwords,
+            'icase': icase,
+            'wlpat': wlpat,
+            'addfreqs': addfreqs,
+            'reldocf': reldocf,
+            'usengrams': usengrams,
+            'ngrams_n': ngrams_n,
+            'ngrams_max_n': ngrams_max_n,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_textypes_with_norms(self, corpname=None):
+    def get_search_textypes_with_norms(self, corpname):
         """GET /search/textypes_with_norms
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
         endpoint = f"/search/textypes_with_norms"
         params = {
-            'corpname': corpname
+            'corpname': corpname,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_search_attr_vals(self, corpname=None, avattr=None, avpat=None, avfrom=None, avmaxitems=None, icase=None, format=None):
+    def get_search_attr_vals(self, corpname, avattr, avpat=None, avfrom=None, avmaxitems=None, icase=None, format=None):
         """GET /search/attr_vals
     Parameters:
       :param corpname: (query) Corpus name. To query your own corpus (e.g. username john, corpus mycorpus), `use` value `user/john/mycorpus`.
@@ -926,15 +1203,24 @@ class SketchEngineClient:
       :param icase: (query) Switches to the `lc` attribute, i.e. the lower-cased version of the corpus to allow case insensitive searching. `1` means that case sensitivity is off, `0` means it is on.
       :param format: (query) The `format` of the output. `Empty value` is interpreted as `JSON`. Not every endpoint supports all formats.
     """
+        if corpname is None: raise ValueError("Parameter 'corpname' is required.")
+        if avattr is None: raise ValueError("Parameter 'avattr' is required.")
         endpoint = f"/search/attr_vals"
         params = {
-            'corpname': corpname, 'avattr': avattr, 'avpat': avpat, 'avfrom': avfrom, 'avmaxitems': avmaxitems, 'icase': icase, 'format': format
+            'corpname': corpname,
+            'avattr': avattr,
+            'avpat': avpat,
+            'avfrom': avfrom,
+            'avmaxitems': avmaxitems,
+            'icase': icase,
+            'format': format,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora(self):
         """GET /ca/api/corpora
@@ -943,84 +1229,155 @@ class SketchEngineClient:
         endpoint = f"/ca/api/corpora"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_corpora(self):
+    def post_ca_api_corpora(self, info=None, language_id=None, name=None, tagset_id=None):
         """POST /ca/api/corpora
     Parameters:
+      (Body is application/json)
+      :param info: (json) The additional information for a newly created corpus.
+      :param language_id: (json) Language iso-code. `ISO 639-1`.
+      :param name: (json) Unique `corpus name` for a newly created corpus.
+      :param tagset_id: (json) Name of used tagset.
     """
         endpoint = f"/ca/api/corpora"
         params = None
-        data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        data = {}
+        if info is not None:
+            data['info'] = info
+        if language_id is not None:
+            data['language_id'] = language_id
+        if name is not None:
+            data['name'] = name
+        if tagset_id is not None:
+            data['tagset_id'] = tagset_id
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid(self, corpusId):
         """GET /ca/api/corpora/{corpusId}
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def put_ca_api_corpora_corpusid(self, corpusId):
+    def put_ca_api_corpora_corpusid(self, corpusId, expert_mode=None, name=None, info=None, document_order=None, lang_filter=None, structures=None, file_structure=None, onion_structure=None, docstructure=None, sketch_grammar_id=None, term_grammar_id=None):
         """PUT /ca/api/corpora/{corpusId}
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
+      (Body is application/json)
+      :param expert_mode: (json) Set to `True` if you are hard-core.
+      :param name: (json) Corpus name. `Given by user`.
+      :param info: (json) Additional info about corpus.
+      :param document_order: (json) Can be set to enforce document order within the corpus.
+      :param lang_filter: (json) 
+      :param structures: (json) Available structures or tags in the corpus. Structures like `s` (sentence), `g` (glue), `doc` (document).
+      :param file_structure: (json) The structure in which individual documents should be wrapped. Usually `doc`.
+      :param onion_structure: (json) The structure for deduplication. Usually `p` (paragraph), `doc` or `Null` (no deduplication).'
+      :param docstructure: (json) Structure in which individual documents should be wrapped. Usually `doc`.
+      :param sketch_grammar_id: (json) `Sketch grammar ID` (name of sketch grammar file). For sketch grammars querying. Sketch grammar is a series of rules written in the CQL query  language that search for collocations in a text corpus and categorize them according to their  grammatical relations. Example: `preloaded/english-penn_tt-3.3.wsdef.m4`.
+      :param term_grammar_id: (json) `Term grammar ID` (name of term grammar file). Term grammar tells Sketch Engine which words and phrases should indentify as terms. Example: `/corpora/wsdef/english-penn_tt-terms-3.1.termdef.m4`.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}"
         params = None
-        data = None
-        return self.make_request('put', endpoint, params=params, data=data)
-    
+        data = {}
+        if expert_mode is not None:
+            data['expert_mode'] = expert_mode
+        if name is not None:
+            data['name'] = name
+        if info is not None:
+            data['info'] = info
+        if document_order is not None:
+            data['document_order'] = document_order
+        if lang_filter is not None:
+            data['lang_filter'] = lang_filter
+        if structures is not None:
+            data['structures'] = structures
+        if file_structure is not None:
+            data['file_structure'] = file_structure
+        if onion_structure is not None:
+            data['onion_structure'] = onion_structure
+        if docstructure is not None:
+            data['docstructure'] = docstructure
+        if sketch_grammar_id is not None:
+            data['sketch_grammar_id'] = sketch_grammar_id
+        if term_grammar_id is not None:
+            data['term_grammar_id'] = term_grammar_id
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'put', endpoint, params=params, data=data
+        )
     
     def delete_ca_api_corpora_corpusid(self, corpusId):
         """DELETE /ca/api/corpora/{corpusId}
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}"
         params = None
         data = None
-        return self.make_request('delete', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'delete', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_can_be_compiled(self, corpusId):
         """POST /ca/api/corpora/{corpusId}/can_be_compiled
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/can_be_compiled"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_get_progress(self, corpusId):
         """POST /ca/api/corpora/{corpusId}/get_progress
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/get_progress"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_corpora_corpusid_compile(self, corpusId):
+    def post_ca_api_corpora_corpusid_compile(self, corpusId, structures=None):
         """POST /ca/api/corpora/{corpusId}/compile
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
+      (Body is application/json)
+      :param structures: (json) `Structures` and `structure attributes` in corpus which should be compiled. Usually: `all`.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/compile"
         params = None
-        data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        data = {}
+        if structures is not None:
+            data['structures'] = structures
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_logs_logname(self, corpusId, logName):
         """GET /ca/api/corpora/{corpusId}/logs/{logName}
@@ -1028,13 +1385,16 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param logName: (path) Name of log file. Name 'last.log' show the newest log for that corpus.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if logName is None: raise ValueError("Parameter 'logName' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/logs/{logName}"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def get_ca_api_corpora_corpusid_download(self, corpusId, format=None, file_structure=None, aligned=None):
+    def get_ca_api_corpora_corpusid_download(self, corpusId, format, file_structure=None, aligned=None):
         """GET /ca/api/corpora/{corpusId}/download
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
@@ -1042,46 +1402,74 @@ class SketchEngineClient:
       :param file_structure: (query) The contents of each file will be enclosed in a XML like structure of the specified name with the filename as its id attribute and the URL (if available) as the url attribute. If empty document boundaries will be lost. Example: `doc`.
       :param aligned: (query) Required when you want to download parallel corpora, **when format == tmx.** Specify aligned corpus name.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if format is None: raise ValueError("Parameter 'format' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/download"
         params = {
-            'format': format, 'file_structure': file_structure, 'aligned': aligned
+            'format': format,
+            'file_structure': file_structure,
+            'aligned': aligned,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_cancel_job(self, corpusId):
         """POST /ca/api/corpora/{corpusId}/cancel_job
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/cancel_job"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_corpora_compile_aligned(self):
+    def post_ca_api_corpora_compile_aligned(self, corpus_ids=None):
         """POST /ca/api/corpora/compile_aligned
     Parameters:
+      (Body is application/json)
+      :param corpus_ids: (json) 
     """
         endpoint = f"/ca/api/corpora/compile_aligned"
         params = None
-        data = None
-        return self.make_request('post', endpoint, params=params, data=data)
+        data = {}
+        files = None
+        if corpus_ids is not None:
+            data['corpus_ids'] = corpus_ids
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_corpora_align(self):
+    def post_ca_api_corpora_align(self, alignstruct=None, auto=None, corpus_ids=None):
         """POST /ca/api/corpora/align
     Parameters:
+      (Body is application/json)
+      :param alignstruct: (json) According to which structure the document should be aligned. Usually, `/<s>`.
+      :param auto: (json) True, when documents are not compiled. Sketch Engine will align them automatically.
+      :param corpus_ids: (json) 
     """
         endpoint = f"/ca/api/corpora/align"
         params = None
-        data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        data = {}
+        if alignstruct is not None:
+            data['alignstruct'] = alignstruct
+        if auto is not None:
+            data['auto'] = auto
+        if corpus_ids is not None:
+            data['corpus_ids'] = corpus_ids
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_documents(self, corpusId, fileset_id=None):
         """GET /ca/api/corpora/{corpusId}/documents
@@ -1089,34 +1477,44 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param fileset_id: (query) ID of file subdirectory. **0** stands for default document directory with name `upload`.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents"
         params = {
-            'fileset_id': fileset_id
+            'fileset_id': fileset_id,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_corpora_corpusid_documents(self, corpusId, corpusId_2, fileset_id=None, fileset_id_2=None, wait_with_tagging=None):
+    def post_ca_api_corpora_corpusid_documents(self, corpusId, files, fileset_id=None, wait_with_tagging=None):
         """POST /ca/api/corpora/{corpusId}/documents
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param fileset_id: (query) ID of file subdirectory. **0** stands for default document directory with name `upload`.
-      :param corpusId_2: (path) Numeric corpus ID. For corpora querying.
-      :param fileset_id_2: (query) ID of file subdirectory. **0** stands for default document directory with name `upload`.
       :param wait_with_tagging: (query) Delay tagging by given number of `seconds`.
     """
-        endpoint = f"/ca/api/corpora/{corpusId_2}/documents"
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        endpoint = f"/ca/api/corpora/{corpusId}/documents"
         params = {
-            'fileset_id': fileset_id, 'fileset_id': fileset_id_2, 'wait_with_tagging': wait_with_tagging
+            'fileset_id': fileset_id,
+            'wait_with_tagging': wait_with_tagging,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        # files dict might be set above if needed; else None
+        if form_data is None and not files:
+            form_data = None
+        return self.make_request(
+            'post',
+            endpoint,
+            params=params,
+            data=data,  # form_data / None
+            files=files,
+        )
     
     def put_ca_api_corpora_corpusid_documents(self, corpusId, fileset_id=None):
         """PUT /ca/api/corpora/{corpusId}/documents
@@ -1124,15 +1522,17 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param fileset_id: (query) ID of file subdirectory. **0** stands for default document directory with name `upload`.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents"
         params = {
-            'fileset_id': fileset_id
+            'fileset_id': fileset_id,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('put', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'put', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_documents_documentid(self, corpusId, documentId):
         """GET /ca/api/corpora/{corpusId}/documents/{documentId}
@@ -1140,23 +1540,62 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def put_ca_api_corpora_corpusid_documents_documentid(self, corpusId, documentId):
+    def put_ca_api_corpora_corpusid_documents_documentid(self, corpusId, documentId, filename_display=None, id=None, inProgress=None, isArchive=None, metadata=None, parameters=None, temporary=None, word_count=None, vertical_progress=None, vertical_error=None):
         """PUT /ca/api/corpora/{corpusId}/documents/{documentId}
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
+      (Body is application/json)
+      :param filename_display: (json) Name of documents.
+      :param id: (json) Unique numeric `document ID` to identify individual documents.
+      :param inProgress: (json) Represents whether the currently edited document is in use.
+      :param isArchive: (json) Represents if the updated document is in a format like .zip (created via some archive manager).
+      :param metadata: (json) Metadata of document. For example, additional `attributes and values`.
+      :param parameters: (json) Parameters for plaintext extraction.
+      :param temporary: (json) Is document temporary or not.
+      :param word_count: (json) Total number of `words` (tokens minus punctuation etc.) in document.
+      :param vertical_progress: (json) Progress of `vertical file` creation.
+      :param vertical_error: (json) An error occured while creating the vertical file. If the creation was succesfull the value is `Null`.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}"
         params = None
-        data = None
-        return self.make_request('put', endpoint, params=params, data=data)
-    
+        data = {}
+        if filename_display is not None:
+            data['filename_display'] = filename_display
+        if id is not None:
+            data['id'] = id
+        if inProgress is not None:
+            data['inProgress'] = inProgress
+        if isArchive is not None:
+            data['isArchive'] = isArchive
+        if metadata is not None:
+            data['metadata'] = metadata
+        if parameters is not None:
+            data['parameters'] = parameters
+        if temporary is not None:
+            data['temporary'] = temporary
+        if word_count is not None:
+            data['word_count'] = word_count
+        if vertical_progress is not None:
+            data['vertical_progress'] = vertical_progress
+        if vertical_error is not None:
+            data['vertical_error'] = vertical_error
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'put', endpoint, params=params, data=data
+        )
     
     def delete_ca_api_corpora_corpusid_documents_documentid(self, corpusId, documentId):
         """DELETE /ca/api/corpora/{corpusId}/documents/{documentId}
@@ -1164,23 +1603,59 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}"
         params = None
         data = None
-        return self.make_request('delete', endpoint, params=params, data=data)
+        return self.make_request(
+            'delete', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_corpora_corpusid_documents_documentid_preview(self, corpusId, documentId):
+    def post_ca_api_corpora_corpusid_documents_documentid_preview(self, corpusId, documentId, auto_paragraphs=None, encoding=None, justext_stoplist=None, permutation=None, tmx_lang=None, tmx_struct=None, tmx_untranslated=None, type=None, unlegalese=None):
         """POST /ca/api/corpora/{corpusId}/documents/{documentId}/preview
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
+      (Body is application/json)
+      :param auto_paragraphs: (json) Automatically insert paragraph breaks (`\<p>`) in place of blank lines.
+      :param encoding: (json) Encoding standard of the document. Usually `UTF-8`.
+      :param justext_stoplist: (json) Represent the list of unimportant words, in a specified language, from an NLP point of view.
+      :param permutation: (json) Changing the order of columns (applies only to `type=vert`).
+      :param tmx_lang: (json) TMX (translation memory exchange). Language of document used for parallel corpus creation.
+      :param tmx_struct: (json) Alignment structure to be used for multilingual documents, `align` is the most used structure. Used within segment distinction, which sentence is in which language and to put sentences with the same meaning into one segment.
+      :param tmx_untranslated: (json) Placeholder for empty segments in multilingual documents. The segments which have no counterpart in a second language of parallel corpus.
+      :param type: (json) File format (`.csv`, `.doc`, `.docx`, `.htm`, `.html` etc.).
+      :param unlegalese: (json) Convert `all-caps` text to `normal case`.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/preview"
         params = None
-        data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        data = {}
+        if auto_paragraphs is not None:
+            data['auto_paragraphs'] = auto_paragraphs
+        if encoding is not None:
+            data['encoding'] = encoding
+        if justext_stoplist is not None:
+            data['justext_stoplist'] = justext_stoplist
+        if permutation is not None:
+            data['permutation'] = permutation
+        if tmx_lang is not None:
+            data['tmx_lang'] = tmx_lang
+        if tmx_struct is not None:
+            data['tmx_struct'] = tmx_struct
+        if tmx_untranslated is not None:
+            data['tmx_untranslated'] = tmx_untranslated
+        if type is not None:
+            data['type'] = type
+        if unlegalese is not None:
+            data['unlegalese'] = unlegalese
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_documents_documentid_original(self, corpusId, documentId):
         """GET /ca/api/corpora/{corpusId}/documents/{documentId}/original
@@ -1188,11 +1663,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/original"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_documents_documentid_plaintext(self, corpusId, documentId):
         """GET /ca/api/corpora/{corpusId}/documents/{documentId}/plaintext
@@ -1200,11 +1678,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/plaintext"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_documents_documentid_vertical(self, corpusId, documentId):
         """GET /ca/api/corpora/{corpusId}/documents/{documentId}/vertical
@@ -1212,11 +1693,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/vertical"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_documents_documentid_expand_archive(self, corpusId, documentId):
         """POST /ca/api/corpora/{corpusId}/documents/{documentId}/expand_archive
@@ -1224,11 +1708,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/expand_archive"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_documents_documentid_cancel_job(self, corpusId, documentId):
         """POST /ca/api/corpora/{corpusId}/documents/{documentId}/cancel_job
@@ -1236,11 +1723,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/cancel_job"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_documents_documentid_get_progress(self, corpusId, documentId):
         """POST /ca/api/corpora/{corpusId}/documents/{documentId}/get_progress
@@ -1248,11 +1738,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param documentId: (path) Document ID. For document querying.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if documentId is None: raise ValueError("Parameter 'documentId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/documents/{documentId}/get_progress"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_filesets(self, corpusId, compile_when_finished=None):
         """GET /ca/api/corpora/{corpusId}/filesets
@@ -1260,31 +1753,80 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param compile_when_finished: (query) Start corpus compiling after web-crawler finishes downloading content from the internet.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/filesets"
         params = {
-            'compile_when_finished': compile_when_finished
+            'compile_when_finished': compile_when_finished,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_corpora_corpusid_filesets(self, corpusId, compile_when_finished=None):
+    def post_ca_api_corpora_corpusid_filesets(self, corpusId, compile_when_finished=None, bl_max_total_kw=None, bl_max_unique_kw=None, black_list=None, input_type=None, max_cleaned_file_size=None, max_file_size=None, min_cleaned_file_size=None, min_file_size=None, name=None, seed_words=None, white_list=None, wl_min_kw_ratio=None, wl_min_total_kw=None, wl_min_unique_kw=None):
         """POST /ca/api/corpora/{corpusId}/filesets
     Parameters:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param compile_when_finished: (query) Start corpus compiling after web-crawler finishes downloading content from the internet.
+      (Body is application/json)
+      :param bl_max_total_kw: (json) Stands for: `blacklist max total keyword`. Means that web page or document will be discarded if it contains more words from the denylist (blacklist) than this limit.
+      :param bl_max_unique_kw: (json) Stands for: `blacklist max unique keyword`. Means that web page or document will be discarded if it contains more unique words from the denylist (blacklist) than this limit.
+      :param black_list: (json) A list (separated by whitespaces) of `blocked words`, words you don't want to see in your future corpus.
+      :param input_type: (json) Input types the web-crawler will works with. Example: `urls`
+      :param max_cleaned_file_size: (json) Web pages and documents with a size `over` this limit (`in kB`) will be ignored.
+      :param max_file_size: (json) Web pages and documents with a size `over` this limit (`in kB`) will be ignored.
+      :param min_cleaned_file_size: (json) Web pages and documents `smaller` than this limit (`in kB`) after cleaning will be ignored. Cleaning involves conversion to plain text, removing boilerplate text (e.g. navigation menus, legal text, disclaimers and other repetitive content).
+      :param min_file_size: (json) Web pages and documents with a `size below` this limit (`in kB`) will be ignored.
+      :param name: (json) Texts will be organized into a corpus folder `with this name`.
+      :param seed_words: (json) A list of words according to which the `URLs` were chosen to be searched.
+      :param white_list: (json) A list (separated by whitespaces) of `allowed words`, words you want to see in your future corpus.
+      :param wl_min_kw_ratio: (json) Stands for: `whitelist minimal keywords ratio`. Means that web page or document will be included only if the `percentage` of allowlist words compared to total words is `higher` than this limit.
+      :param wl_min_total_kw: (json) Stands for: `whitelist minimal total keywords`. Means that web page or document will be included only if it contains `more words` from the `allowlist` (whitelist) than this limit.
+      :param wl_min_unique_kw: (json) Stands for: `whitelist minimal unique keywords`. Means that a web page or document will be included only if it contains `more words` from the `allowlist` (whitelist) than this limit.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/filesets"
         params = {
-            'compile_when_finished': compile_when_finished
+            'compile_when_finished': compile_when_finished,
         }
         # Filter out None values
         params = {k: v for k, v in params.items() if v is not None}
-        data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        data = {}
+        if bl_max_total_kw is not None:
+            data['bl_max_total_kw'] = bl_max_total_kw
+        if bl_max_unique_kw is not None:
+            data['bl_max_unique_kw'] = bl_max_unique_kw
+        if black_list is not None:
+            data['black_list'] = black_list
+        if input_type is not None:
+            data['input_type'] = input_type
+        if max_cleaned_file_size is not None:
+            data['max_cleaned_file_size'] = max_cleaned_file_size
+        if max_file_size is not None:
+            data['max_file_size'] = max_file_size
+        if min_cleaned_file_size is not None:
+            data['min_cleaned_file_size'] = min_cleaned_file_size
+        if min_file_size is not None:
+            data['min_file_size'] = min_file_size
+        if name is not None:
+            data['name'] = name
+        if seed_words is not None:
+            data['seed_words'] = seed_words
+        if white_list is not None:
+            data['white_list'] = white_list
+        if wl_min_kw_ratio is not None:
+            data['wl_min_kw_ratio'] = wl_min_kw_ratio
+        if wl_min_total_kw is not None:
+            data['wl_min_total_kw'] = wl_min_total_kw
+        if wl_min_unique_kw is not None:
+            data['wl_min_unique_kw'] = wl_min_unique_kw
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_corpora_corpusid_filesets_filesetid(self, corpusId, filesetId):
         """GET /ca/api/corpora/{corpusId}/filesets/{filesetId}
@@ -1292,11 +1834,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param filesetId: (path) ID of file subdirectories. If sets to 0 it will return top-level folder of documents, so if you have a web corpora with folders web1 and web2 it will return web1.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if filesetId is None: raise ValueError("Parameter 'filesetId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def delete_ca_api_corpora_corpusid_filesets_filesetid(self, corpusId, filesetId):
         """DELETE /ca/api/corpora/{corpusId}/filesets/{filesetId}
@@ -1304,11 +1849,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param filesetId: (path) ID of file subdirectories. If sets to 0 it will return top-level folder of documents, so if you have a web corpora with folders web1 and web2 it will return web1.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if filesetId is None: raise ValueError("Parameter 'filesetId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}"
         params = None
         data = None
-        return self.make_request('delete', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'delete', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_filesets_filesetid_cancel_job(self, corpusId, filesetId):
         """POST /ca/api/corpora/{corpusId}/filesets/{filesetId}/cancel_job
@@ -1316,11 +1864,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param filesetId: (path) ID of file subdirectories. If sets to 0 it will return top-level folder of documents, so if you have a web corpora with folders web1 and web2 it will return web1.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if filesetId is None: raise ValueError("Parameter 'filesetId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}/cancel_job"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def post_ca_api_corpora_corpusid_filesets_filesetid_get_progress(self, corpusId, filesetId):
         """POST /ca/api/corpora/{corpusId}/filesets/{filesetId}/get_progress
@@ -1328,11 +1879,14 @@ class SketchEngineClient:
       :param corpusId: (path) Numeric corpus ID. For corpora querying.
       :param filesetId: (path) ID of file subdirectories. If sets to 0 it will return top-level folder of documents, so if you have a web corpora with folders web1 and web2 it will return web1.
     """
+        if corpusId is None: raise ValueError("Parameter 'corpusId' is required.")
+        if filesetId is None: raise ValueError("Parameter 'filesetId' is required.")
         endpoint = f"/ca/api/corpora/{corpusId}/filesets/{filesetId}/get_progress"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_languages(self):
         """GET /ca/api/languages
@@ -1341,8 +1895,9 @@ class SketchEngineClient:
         endpoint = f"/ca/api/languages"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def post_ca_api_somefiles(self):
         """POST /ca/api/somefiles
@@ -1351,63 +1906,80 @@ class SketchEngineClient:
         endpoint = f"/ca/api/somefiles"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
     def get_ca_api_somefiles_somefileid(self, somefileId):
         """GET /ca/api/somefiles/{somefileId}
     Parameters:
       :param somefileId: (path) Alphanumeric multilanguage file ID
     """
+        if somefileId is None: raise ValueError("Parameter 'somefileId' is required.")
         endpoint = f"/ca/api/somefiles/{somefileId}"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
-    
-    def put_ca_api_somefiles_somefileid(self, somefileId):
+    def put_ca_api_somefiles_somefileid(self, somefileId, files, corpora=None):
         """PUT /ca/api/somefiles/{somefileId}
     Parameters:
       :param somefileId: (path) Alphanumeric multilanguage file ID
+      (Body is application/json)
+      :param corpora: (json) 
     """
+        if somefileId is None: raise ValueError("Parameter 'somefileId' is required.")
         endpoint = f"/ca/api/somefiles/{somefileId}"
         params = None
-        data = None
-        return self.make_request('put', endpoint, params=params, data=data)
-    
+        data = {}
+        if corpora is not None:
+            data['corpora'] = corpora
+        # Filter out None values in data dict
+        data = {k: v for k, v in data.items() if v is not None}
+        return self.make_request(
+            'put', endpoint, params=params, data=data
+        )
     
     def get_ca_api_tagsets_templateid(self, templateId):
         """GET /ca/api/tagsets/{templateId}
     Parameters:
       :param templateId: (path) Numerical template ID, but preloaded templates do not have ID but you can query them by their name. Example: `UNIVERSAL_3`.
     """
+        if templateId is None: raise ValueError("Parameter 'templateId' is required.")
         endpoint = f"/ca/api/tagsets/{templateId}"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
     def put_ca_api_tagsets_templateid(self, templateId):
         """PUT /ca/api/tagsets/{templateId}
     Parameters:
       :param templateId: (path) Numerical template ID, but preloaded templates do not have ID but you can query them by their name. Example: `UNIVERSAL_3`.
     """
+        if templateId is None: raise ValueError("Parameter 'templateId' is required.")
         endpoint = f"/ca/api/tagsets/{templateId}"
         params = None
         data = None
-        return self.make_request('put', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'put', endpoint, params=params, data=data
+        )
     
     def delete_ca_api_tagsets_templateid(self, templateId):
         """DELETE /ca/api/tagsets/{templateId}
     Parameters:
       :param templateId: (path) Numerical template ID, but preloaded templates do not have ID but you can query them by their name. Example: `UNIVERSAL_3`.
     """
+        if templateId is None: raise ValueError("Parameter 'templateId' is required.")
         endpoint = f"/ca/api/tagsets/{templateId}"
         params = None
         data = None
-        return self.make_request('delete', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'delete', endpoint, params=params, data=data
+        )
     
     def post_ca_api_users_me_get_used_space(self):
         """POST /ca/api/users/me/get_used_space
@@ -1416,27 +1988,81 @@ class SketchEngineClient:
         endpoint = f"/ca/api/users/me/get_used_space"
         params = None
         data = None
-        return self.make_request('post', endpoint, params=params, data=data)
+        return self.make_request(
+            'post', endpoint, params=params, data=data
+        )
     
-    
-    def post_ca_api_octerms_datasets(self):
+    def post_ca_api_octerms_datasets(self, mode=None, l0=None, l1=None, l2=None, file=None, temporary=None, pingback=None, tmx1=None, tmx2=None, files1=None, files2=None):
         """POST /ca/api/octerms/datasets
     Parameters:
+      (Body is multipart/form-data)
+      :param mode: (form) 'mono' for monolingual data
+    
+    'aligned' for already aligned bilingual data like TMX
+    
+    'translated' for bilingual data requiring automatic alignment
+      :param l0: (form) language code (only in monolingual mode)
+      :param l1: (form) source language code (only in bilingual modes)
+      :param l2: (form) target language code (only in bilingual modes)
+      :param file: (file) single file => (filename, fileobj)
+      :param temporary: (form) if true, dataset will be deleted automatically in a few days, otherwise corpora will be visible in Sketch Engine and take up storage quota
+      :param pingback: (form) optional URL to be "pinged" by a HTTP GET request when results are ready
+      :param tmx1: (form) source language identifier in aligned data
+      :param tmx2: (form) target language identifier in aligned data
+      :param files1: (form) space-separated field names of input files for source language in 'translated' mode
+      :param files2: (form) space-separated field names of input files for target language in 'translated' mode
     """
         endpoint = f"/ca/api/octerms/datasets"
         params = None
-        data = None
-        return self.make_request('post', endpoint, params=params, data=data)
-    
+        files = {}
+        form_data = {}
+        if mode is not None:
+            form_data['mode'] = str(mode)
+        if l0 is not None:
+            form_data['l0'] = str(l0)
+        if l1 is not None:
+            form_data['l1'] = str(l1)
+        if l2 is not None:
+            form_data['l2'] = str(l2)
+        if file is not None:
+            files['file'] = file
+        if temporary is not None:
+            form_data['temporary'] = str(temporary)
+        if pingback is not None:
+            form_data['pingback'] = str(pingback)
+        if tmx1 is not None:
+            form_data['tmx1'] = str(tmx1)
+        if tmx2 is not None:
+            form_data['tmx2'] = str(tmx2)
+        if files1 is not None:
+            form_data['files1'] = str(files1)
+        if files2 is not None:
+            form_data['files2'] = str(files2)
+        if not form_data:
+            form_data = None
+        # We'll rename form_data to 'data' so the final call uses data=form_data
+        data = form_data
+        # files dict might be set above if needed; else None
+        if form_data is None and not files:
+            form_data = None
+        return self.make_request(
+            'post',
+            endpoint,
+            params=params,
+            data=data,  # form_data / None
+            files=files,
+        )
     
     def get_ca_api_octerms_datasets_datasetid(self, datasetId):
         """GET /ca/api/octerms/datasets/{datasetId}
     Parameters:
       :param datasetId: (path) Unique dataset ID
     """
+        if datasetId is None: raise ValueError("Parameter 'datasetId' is required.")
         endpoint = f"/ca/api/octerms/datasets/{datasetId}"
         params = None
         data = None
-        return self.make_request('get', endpoint, params=params, data=data)
-    
+        return self.make_request(
+            'get', endpoint, params=params, data=data
+        )
     
