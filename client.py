@@ -460,11 +460,22 @@ class SketchEngineClient:
         relfreq: Optional[int] = None,
         reldocf: Optional[int] = None,
         wlfile: Optional[str] = None,
-        addfreqs: Optional[int] = None,
-        asyn: Optional[int] = None,
-        format: Optional[str] = None
+        wlicase: Optional[int] = None,
+        wlmaxitems: Optional[int] = None,
+        wlpage: Optional[int] = None,
+        format: Optional[str] = None,
+        random: Optional[int] = None,
+        wltype: Optional[str] = None,
+        ngrams_n: Optional[int] = None,
+        ngrams_max_n: Optional[int] = None,
+        nest_ngrams: Optional[int] = None,
+        simple_n: Optional[int] = None,
+        usengrams: Optional[int] = None
     ) -> Dict[str, Any]:
         """Generate frequency lists of all tokens, lemmas, word forms, etc.
+        
+        This method can be used for generating frequency lists of all tokens, lemmas, word forms etc. 
+        or for retrieving frequencies of concrete items. Regex can be used for detailed criteria.
         
         Args:
             corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
@@ -480,9 +491,17 @@ class SketchEngineClient:
             relfreq: Include relative frequency of each item (0 or 1)
             reldocf: Calculate document frequency for each item (0 or 1)
             wlfile: A whitelist file with items to include
-            addfreqs: Additional frequency type (e.g. 1 when retrieving docf)
-            asyn: 1 => partial results returned as soon as first page is available
+            wlicase: Case-sensitive search (0 or 1)
+            wlmaxitems: Maximum number of items to return
+            wlpage: Page number for paginated results
             format: Output format (defaults to JSON)
+            random: Return random sample of size n
+            wltype: Type of wordlist (basic, advanced, etc.)
+            ngrams_n: Size of n-grams
+            ngrams_max_n: Maximum size of n-grams
+            nest_ngrams: Whether to nest n-grams (0 or 1)
+            simple_n: Simple n-gram size
+            usengrams: Whether to use n-grams (0 or 1)
             
         Returns:
             Dict containing the wordlist results
@@ -533,14 +552,36 @@ class SketchEngineClient:
             params["reldocf"] = reldocf
         if wlfile:
             params["wlfile"] = wlfile
-        if addfreqs is not None:
-            params["addfreqs"] = addfreqs
-        if asyn is not None:
-            if asyn not in (0, 1):
-                raise ValueError("asyn must be 0 or 1")
-            params["asyn"] = asyn
+        if wlicase is not None:
+            if wlicase not in (0, 1):
+                raise ValueError("wlicase must be 0 or 1")
+            params["wlicase"] = wlicase
+        if wlmaxitems is not None:
+            params["wlmaxitems"] = wlmaxitems
+        if wlpage is not None:
+            params["wlpage"] = wlpage
         if format:
             params["format"] = format
+        if random is not None:
+            params["random"] = random
+        if wltype:
+            params["wltype"] = wltype
+            
+        # N-gram related parameters
+        if ngrams_n is not None:
+            params["ngrams_n"] = ngrams_n
+        if ngrams_max_n is not None:
+            params["ngrams_max_n"] = ngrams_max_n
+        if nest_ngrams is not None:
+            if nest_ngrams not in (0, 1):
+                raise ValueError("nest_ngrams must be 0 or 1")
+            params["nest_ngrams"] = nest_ngrams
+        if simple_n is not None:
+            params["simple_n"] = simple_n
+        if usengrams is not None:
+            if usengrams not in (0, 1):
+                raise ValueError("usengrams must be 0 or 1")
+            params["usengrams"] = usengrams
             
         response = self.session.get(f"{self.BASE_URL}/search/wordlist", params=params)
         response.raise_for_status()
