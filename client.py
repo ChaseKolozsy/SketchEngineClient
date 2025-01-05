@@ -397,7 +397,10 @@ class SketchEngineClient:
         bim_lpos: Optional[str] = None,
         format: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Generate word combinations (collocations) sorted by typicality or frequency.
+        """The most typical word combinations (collocations).
+        
+        Generates word combinations (collocations) sorted by typicality or frequency 
+        and categorized into grammatical relations.
         
         Args:
             corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
@@ -418,7 +421,7 @@ class SketchEngineClient:
             format: Output format (defaults to JSON)
             
         Returns:
-            Dict containing the word sketch results with collocations
+            Dict containing the word sketch results with collocations sorted by typicality or frequency
             
         Raises:
             requests.RequestException: If the API request fails
@@ -504,7 +507,7 @@ class SketchEngineClient:
         simple_n: Optional[int] = None,
         usengrams: Optional[int] = None
     ) -> Dict[str, Any]:
-        """Generate frequency lists of all tokens, lemmas, word forms, etc.
+        """A list of word frequencies from the specified corpus.
         
         This method can be used for generating frequency lists of all tokens, lemmas, word forms etc. 
         or for retrieving frequencies of concrete items. Regex can be used for detailed criteria.
@@ -536,7 +539,7 @@ class SketchEngineClient:
             usengrams: Whether to use n-grams (0 or 1)
             
         Returns:
-            Dict containing the wordlist results
+            Dict containing the wordlist results with frequencies
             
         Raises:
             requests.RequestException: If the API request fails
@@ -551,7 +554,7 @@ class SketchEngineClient:
             "wlattr": wlattr
         }
         
-        # Add optional parameters if provided
+        # Add optional parameters in the order specified by the API
         if usesubcorp:
             params["usesubcorp"] = usesubcorp
         if wlnums:
@@ -616,6 +619,74 @@ class SketchEngineClient:
             params["usengrams"] = usengrams
             
         response = self.session.get(f"{self.BASE_URL}/search/wordlist", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def corp_info(
+        self,
+        corpname: str,
+        usesubcorp: Optional[str] = None,
+        subcorpora: Optional[int] = None,
+        gramrels: Optional[int] = None,
+        corpcheck: Optional[int] = None,
+        registry: Optional[int] = None,
+        struct_attr_stats: Optional[int] = None,
+        format: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Statistics and information about the whole corpus.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            usesubcorp: Subcorpus name (defaults to entire corpus)
+            subcorpora: Whether to include information about subcorpora (0 or 1)
+            gramrels: Whether to include grammatical relations (0 or 1)
+            corpcheck: Whether to perform corpus consistency check (0 or 1)
+            registry: Whether to include registry information (0 or 1)
+            struct_attr_stats: Whether to include structural attribute statistics (0 or 1)
+            format: Output format (defaults to JSON)
+            
+        Returns:
+            Dict containing corpus statistics and information
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname:
+            raise ValueError("corpname is required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname
+        }
+        
+        # Add optional parameters if provided
+        if usesubcorp:
+            params["usesubcorp"] = usesubcorp
+        if subcorpora is not None:
+            if subcorpora not in (0, 1):
+                raise ValueError("subcorpora must be 0 or 1")
+            params["subcorpora"] = subcorpora
+        if gramrels is not None:
+            if gramrels not in (0, 1):
+                raise ValueError("gramrels must be 0 or 1")
+            params["gramrels"] = gramrels
+        if corpcheck is not None:
+            if corpcheck not in (0, 1):
+                raise ValueError("corpcheck must be 0 or 1")
+            params["corpcheck"] = corpcheck
+        if registry is not None:
+            if registry not in (0, 1):
+                raise ValueError("registry must be 0 or 1")
+            params["registry"] = registry
+        if struct_attr_stats is not None:
+            if struct_attr_stats not in (0, 1):
+                raise ValueError("struct_attr_stats must be 0 or 1")
+            params["struct_attr_stats"] = struct_attr_stats
+        if format:
+            params["format"] = format
+            
+        response = self.session.get(f"{self.BASE_URL}/search/corp_info", params=params)
         response.raise_for_status()
         return response.json()
 
