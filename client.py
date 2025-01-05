@@ -24,6 +24,11 @@ class DiffBy(Enum):
     WORD_FORM = "word form"
     SUBCORPUS = "subcorpus"
 
+class WSketchSortMode(Enum):
+    """Available sorting modes for word sketch collocates."""
+    SCORE = "s"
+    FREQUENCY = "f"
+
 class SketchEngineClient:
     """Client for interacting with the Sketch Engine API."""
     
@@ -319,6 +324,105 @@ class SketchEngineClient:
             params["format"] = format
             
         response = self.session.get(f"{self.BASE_URL}/search/thes", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def wsketch_search(
+        self,
+        corpname: str,
+        lemma: str,
+        lpos: Optional[str] = None,
+        usesubcorp: Optional[str] = None,
+        minfreq: Optional[Union[str, int]] = None,
+        minscore: Optional[Union[str, int]] = None,
+        minsim: Optional[int] = None,
+        maxitems: Optional[int] = None,
+        clustercolls: Optional[int] = None,
+        expand_seppage: Optional[int] = None,
+        sort_ws_columns: Optional[WSketchSortMode] = None,
+        structured: Optional[str] = None,
+        bim_corpname: Optional[str] = None,
+        bim_lemma: Optional[str] = None,
+        bim_lpos: Optional[str] = None,
+        format: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Generate word combinations (collocations) sorted by typicality or frequency.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            lemma: Base form of the word (lemma) to get a word sketch for
+            lpos: Part of speech for the lemma
+            usesubcorp: Name of a subcorpus to restrict the word sketch
+            minfreq: Minimum frequency below which collocates are hidden (integer or 'auto')
+            minscore: The minimum logDice score of the collocates
+            minsim: The minimum similarity threshold when clusterColls=1
+            maxitems: Maximum number of items in each grammatical relation block
+            clustercolls: Groups collocates by similarity in meaning if set to 1
+            expand_seppage: 1 => show grammatical relations grouped together on separate pages
+            sort_ws_columns: Sort collocates by score (s) or absolute frequency (f)
+            structured: 1 => grouped into grammatical relations; 0 => single unstructured list
+            bim_corpname: Second corpus for bilingual word sketches
+            bim_lemma: The lemma in the second corpus, for bilingual word sketches
+            bim_lpos: The part of speech of the lemma in the second corpus
+            format: Output format (defaults to JSON)
+            
+        Returns:
+            Dict containing the word sketch results with collocations
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname or not lemma:
+            raise ValueError("corpname and lemma are required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname,
+            "lemma": lemma
+        }
+        
+        # Add optional parameters if provided
+        if lpos:
+            params["lpos"] = lpos
+        if usesubcorp:
+            params["usesubcorp"] = usesubcorp
+        if minfreq is not None:
+            params["minfreq"] = str(minfreq)
+        if minscore is not None:
+            params["minscore"] = str(minscore)
+        if minsim is not None:
+            params["minsim"] = minsim
+        if maxitems is not None:
+            params["maxitems"] = maxitems
+        if clustercolls is not None:
+            if clustercolls not in (0, 1):
+                raise ValueError("clustercolls must be 0 or 1")
+            params["clustercolls"] = clustercolls
+        if expand_seppage is not None:
+            if expand_seppage not in (0, 1):
+                raise ValueError("expand_seppage must be 0 or 1")
+            params["expand_seppage"] = expand_seppage
+        if sort_ws_columns:
+            params["sort_ws_columns"] = sort_ws_columns.value
+        if structured is not None:
+            if structured not in ("0", "1"):
+                raise ValueError("structured must be '0' or '1'")
+            params["structured"] = structured
+        
+        # Handle bilingual word sketch parameters
+        if any([bim_corpname, bim_lemma, bim_lpos]):
+            if not all([bim_corpname, bim_lemma]):
+                raise ValueError("Both bim_corpname and bim_lemma are required for bilingual word sketches")
+            params["bim_corpname"] = bim_corpname
+            params["bim_lemma"] = bim_lemma
+            if bim_lpos:
+                params["bim_lpos"] = bim_lpos
+                
+        if format:
+            params["format"] = format
+            
+        response = self.session.get(f"{self.BASE_URL}/search/wsketch", params=params)
         response.raise_for_status()
         return response.json()
 
