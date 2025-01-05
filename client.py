@@ -108,11 +108,15 @@ class SketchEngineClient:
     ) -> Dict[str, Any]:
         """Perform a concordance search in the specified corpus.
         
+        For basic searches, only corpname and q parameters are required.
+        The concordance allows complex criteria for searching the corpus.
+        The queries can combine any data, metadata and annotations found in the corpus.
+        
         Args:
             corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
-            q: Primary query string (CQL, iquery, etc.)
-            query_type: Type of query being used (e.g. QuerySelector.PHRASE)
-            query: The actual query string matching the query_type
+            q: Primary query string (CQL, iquery, etc.). For basic searches, this is all you need with corpname.
+            query_type: Type of query being used (e.g. QuerySelector.PHRASE) when not using direct q parameter
+            query: The actual query string matching the query_type when not using direct q parameter
             usesubcorp: Name of subcorpus to use
             lpos: Part-of-speech of the lemma
             default_attr: Default attribute for tokens in query
@@ -141,19 +145,23 @@ class SketchEngineClient:
             
         # Build query parameters
         params: Dict[str, Any] = {
-            "corpname": corpname,
-            "fromp": fromp,
-            "pagesize": pagesize
+            "corpname": corpname
         }
         
-        # Add optional parameters if provided
+        # Handle pagination parameters
+        if fromp is not None:
+            params["fromp"] = fromp
+        if pagesize is not None:
+            params["pagesize"] = pagesize
+        
+        # Handle query parameters - prefer direct q parameter if provided
         if q:
             params["q"] = q
-            # When using q parameter, we need to specify queryselector
-            params["concordance_query[queryselector]"] = "cqlrow"  # CQL is the default for direct queries
         elif query_type and query:
             params["concordance_query[queryselector]"] = query_type.value
             params[f"concordance_query[{query_type.value.replace('row', '')}]"] = query
+        
+        # Add optional parameters if provided
         if usesubcorp:
             params["usesubcorp"] = usesubcorp
         if lpos:
