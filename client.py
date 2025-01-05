@@ -818,6 +818,92 @@ class SketchEngineClient:
         response.raise_for_status()
         return response.json()
 
+    def fullref_search(
+        self,
+        corpname: str,
+        pos: str
+    ) -> Dict[str, Any]:
+        """Returns all metadata of one concordance line.
+        
+        Displays all available text types (metadata) related to the concrete KWIC (hit) 
+        defined by its position in the corpus.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            pos: Position in the corpus
+            
+        Returns:
+            Dict containing all metadata for the concordance line
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname or not pos:
+            raise ValueError("corpname and pos are required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname,
+            "pos": pos
+        }
+            
+        response = self.session.get(f"{self.BASE_URL}/search/fullref", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def widectx_search(
+        self,
+        corpname: str,
+        pos: str,
+        hitlen: Optional[int] = None,
+        structs: Optional[Union[str, List[str]]] = None,
+        detail_left_ctx: Optional[str] = None,
+        detail_right_ctx: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Returns extended context of the KWIC in a concrete concordance line.
+        
+        This is the equivalent of clicking KWIC in one concordance line which displays 
+        a popup with an extended context.
+        
+        Args:
+            corpname: Corpus name (e.g. 'preloaded/magyarok_hp2')
+            pos: Position in the corpus
+            hitlen: Length of the hit (in tokens)
+            structs: Structural tags to include (comma-separated or list)
+            detail_left_ctx: Size of the left context
+            detail_right_ctx: Size of the right context
+            
+        Returns:
+            Dict containing the extended context for the concordance line
+            
+        Raises:
+            requests.RequestException: If the API request fails
+            ValueError: If required parameters are missing or invalid
+        """
+        if not corpname or not pos:
+            raise ValueError("corpname and pos are required")
+            
+        # Build query parameters
+        params: Dict[str, Any] = {
+            "corpname": corpname,
+            "pos": pos
+        }
+        
+        # Add optional parameters if provided
+        if hitlen is not None:
+            params["hitlen"] = hitlen
+        if structs:
+            params["structs"] = ",".join(structs) if isinstance(structs, list) else structs
+        if detail_left_ctx:
+            params["detail_left_ctx"] = detail_left_ctx
+        if detail_right_ctx:
+            params["detail_right_ctx"] = detail_right_ctx
+            
+        response = self.session.get(f"{self.BASE_URL}/search/widectx", params=params)
+        response.raise_for_status()
+        return response.json()
+
 if __name__ == "__main__":
     # Example usage
     client = SketchEngineClient()
